@@ -1,0 +1,7 @@
+venv
+.idea/**/*
+.idea/.gitignore
+.vscode
+.DS_Store
+.env
+.env.local
