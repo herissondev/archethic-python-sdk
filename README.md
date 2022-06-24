@@ -6,7 +6,7 @@ Clone this repo with `git clone https://github.com/aime-risson/archethic-python-
 
 Install requirements with `pip install -r requirements.txt`
 
-Finally, install the package with `pip setup.py install`
+Finally, install the package with `python setup.py install`
 
 ## Contribution
 
