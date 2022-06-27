@@ -278,6 +278,17 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
             ]
         )
 
+    # TODO : implement prime256v1 encryption
+    elif curve_buf == 1:
+        raise NotImplementedError("prime256v1 encryption not implemented yet")
+
+    # TODO : implement secp256k1 encryption
+    elif curve_buf == 2:
+        raise NotImplementedError("secp256k1 encryption not implemented yet")
+
+    else:
+        raise ValueError("Curve not supported")
+
 
 # TODO: implement ec_decrypt
 def ec_decrypt(data: Union[str,bytearray], private_key: Union[str,bytearray], curve: str = "ed25519") -> str:
