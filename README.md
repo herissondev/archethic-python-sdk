@@ -30,7 +30,7 @@ Please to follow this workflow:
 - [x] get_originKey()
 - [x] derive_keypair()
 - [x] derive_address()
-- [ ] ec_encrypt() [link](https://codeahoy.com/learn/practicalcryptography/asymmetric-key-ciphers/ecies-example/)
+- [x] ec_encrypt() 
 - [ ] aes_encrypt()
 
 ### Transaction building

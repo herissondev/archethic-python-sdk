@@ -237,7 +237,7 @@ def derive_address(seed: str, index: int, curve: str = "ed25519", algo: str = "s
 
 
 # TODO: implement ec_encrypt
-def ec_encrypt(data: Union[str,bytearray], public_key: Union[str,bytearray], curve: str = "ed25519") -> hex:
+def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
     """
     Encrypt a data for a given public key using ECIES algorithm
     :param data: Data to encrypt
@@ -245,10 +245,9 @@ def ec_encrypt(data: Union[str,bytearray], public_key: Union[str,bytearray], cur
     :param curve: Curve used to encrypt the data
     :return: Encrypted data
     """
-    raise NotImplementedError('ec encryption not implemented')
-    isinstance(data, str or bytearray), 'Data must be a string or a bytearray'
+
+    isinstance(data, str or bytes), 'Data must be a string or a bytes'
     isinstance(public_key, str or bytearray), 'Public key must be a string or a bytearray'
-    isinstance(curve, str), 'Curve must be a string'
 
     if type(data) == str:
         if is_hex(data):
@@ -263,24 +262,24 @@ def ec_encrypt(data: Union[str,bytearray], public_key: Union[str,bytearray], cur
             raise ValueError('Public key must be a hex string')
 
     curve_buf = public_key[0]
-    pub_buf = public_key[1:]
+    pub_buf = public_key[2:]
 
     if curve_buf == 0:
         ephemeral_private_key = PrivateKey.generate()
 
-        ephemeral_public_key = ephemeral_private_key.public_key
+        ephemeral_public_key, ephemeral_private_key = libsodium.crypto_box_keypair()
+        curve25519_pub = libsodium.crypto_sign_ed25519_pk_to_curve25519(bytes(pub_buf))
 
-        crypto_box = Box(ephemeral_private_key, ephemeral_public_key)
+        shared_key = libsodium.crypto_scalarmult_ed25519(ephemeral_private_key, curve25519_pub)
 
-        ciphertext = crypto_box.encrypt(data)
-        aes_key, iv = derive_secret(crypto_box.shared_key())
+        iv, aes_key = derive_secret(shared_key)
 
-        tag, encrypted = aes_auth_encrypt(aes_key, iv, data)
+        encrypted, tag = aes_auth_encrypt(aes_key, iv, data)
 
 
         return concat_uint8array(
             [
-                bytearray(ephemeral_public_key.__bytes__()),
+                bytearray(ephemeral_public_key),
                 tag,
                 encrypted
             ]
