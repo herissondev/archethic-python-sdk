@@ -232,7 +232,6 @@ def derive_address(seed: str, index: int, curve: str = "ed25519", algo: str = "s
     ).hex()
 
 
-# TODO: implement ec_encrypt
 def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
     """
     Encrypt a data for a given public key using ECIES algorithm
