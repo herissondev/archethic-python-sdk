@@ -5,3 +5,5 @@ venv
 .DS_Store
 .env
 .env.local
+build
+dist
