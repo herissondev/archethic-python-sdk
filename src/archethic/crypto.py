@@ -1,13 +1,10 @@
-import os
-from .utils import is_hex, hex_to_uint8array, uint8array_to_int, concat_uint8array, int_to_uint8array, uint8array_to_hex
+from .utils import is_hex, hex_to_uint8array, concat_uint8array, int_to_uint8array
 from typing import Union
 import hashlib
 import hmac
-from Crypto.Cipher import AES
+from archethic import libsodium
 from nacl.signing import SigningKey
-from nacl.public import Box, PrivateKey
-from fastecdsa import curve, ecdsa, keys
-from fastecdsa.curve import P256 as P256_curve
+
 SOFTWARE_ID = 1
 
 
@@ -133,7 +130,6 @@ def derive_keypair(seed: str, index: int, curve: str = "ed25519") -> (hex, hex):
     assert index >= 0, 'Index must be a positive number'
     isinstance(curve, str), 'Curve must be a string'
 
-    #ok
     pv_Buf = derive_private_key(seed, index)
 
     return generate_deterministic_keypair(pv_Buf, curve, SOFTWARE_ID)
@@ -242,7 +238,6 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
     Encrypt a data for a given public key using ECIES algorithm
     :param data: Data to encrypt
     :param public_key: Public key used to encrypt the data
-    :param curve: Curve used to encrypt the data
     :return: Encrypted data
     """
 
@@ -265,7 +260,6 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
     pub_buf = public_key[2:]
 
     if curve_buf == 0:
-        ephemeral_private_key = PrivateKey.generate()
 
         ephemeral_public_key, ephemeral_private_key = libsodium.crypto_box_keypair()
         curve25519_pub = libsodium.crypto_sign_ed25519_pk_to_curve25519(bytes(pub_buf))
@@ -318,12 +312,9 @@ def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytes, bytes):
 
 
 # TODO: implement aes_auth_encrypt
-def aes_auth_encrypt(aes_key: bytearray, iv: bytearray, data: bytearray):
-    raise NotImplementedError('aes_auth_encrypt not implemented')
-    # cipher = AES.new(aes_key, AES.MODE_GCM, iv)
-    # ciphertext, tag = cipher.encrypt_and_digest(data)
-    # print(f"cipher :{ciphertext.hex()} tag :{tag.hex()}")
-    # return bytearray(tag), ciphertext
+def aes_auth_encrypt(aes_key: bytes, iv: bytes, data: bytes) -> (bytes, bytes):
+    ciphertext, tag = libsodium.crypto_aead_aes256gcm_encrypt_detached(message=data,iv=iv,key=aes_key)
+    return ciphertext, tag
 
 
 # TODO: implement aes_decrypt
