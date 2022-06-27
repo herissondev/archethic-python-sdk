@@ -310,7 +310,6 @@ def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytes, bytes):
     return iv, aes_key
 
 
-# TODO: implement aes_auth_encrypt
 def aes_auth_encrypt(aes_key: bytes, iv: bytes, data: bytes) -> (bytes, bytes):
     ciphertext, tag = libsodium.crypto_aead_aes256gcm_encrypt_detached(message=data,iv=iv,key=aes_key)
     return ciphertext, tag
