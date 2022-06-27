@@ -292,7 +292,7 @@ def ec_decrypt(data: Union[str,bytearray], private_key: Union[str,bytearray], cu
     raise NotImplementedError('ec decryption not implemented')
 
 
-def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytearray, bytearray):
+def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytes, bytes):
     """
     Derive a secret from a shared key and an index
     :param shared_key:
@@ -309,15 +309,14 @@ def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytearray, bytear
 
     pseudo_random_secret = hashlib.sha256(shared_key).digest()
 
-    iv = hashlib.sha256(pseudo_random_secret)
-    iv.update("0".encode())
+    iv = hmac.new(pseudo_random_secret, "0".encode(), "sha256")
     iv = iv.digest()[:32]
 
-    aes_key = hashlib.sha256(iv)
-    aes_key.update("1".encode())
+    aes_key =  hmac.new(iv, "1".encode(), "sha256")
     aes_key = aes_key.digest()[:32]
 
-    return aes_key, iv
+    return iv, aes_key
+
 
 # TODO: implement aes_auth_encrypt
 def aes_auth_encrypt(aes_key: bytearray, iv: bytearray, data: bytearray):
