@@ -18,7 +18,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    install_requires=[""],
+    install_requires=["PyNaCl"],
     keywords=["python", "crypto", "archethic", "python archethic", "UCO"],
     classifiers=[
         "Programming Language :: Python :: 3",
