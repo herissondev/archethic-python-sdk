@@ -607,48 +607,6 @@ def crypto_secretbox_open(ctxt, nonce, key):
         raise ValueError('Failed to decrypt message')
     return msg.raw[crypto_secretbox_ZEROBYTES:]
 
-
-# Authenticated Symmetric Encryption with Additional Data
-def crypto_aead_aes256gcm_encrypt_detached(message: bytes, iv: bytes, key: hex):
-    """Encrypts and authenticates a message with public additional data using the given secret key, and iv
-
-        Args:
-            message (bytes): a message to encrypt
-            iv (bytes): nonce, does not have to be confidential must be
-                `crypto_aead_aes256gcm_NPUBBYTES` in length
-            key (bytes): secret key, must be `crypto_aead_aes256gcm_KEYBYTES` in
-                length
-
-        Returns:
-            bytes: the ciphertext
-            bytes: the tag
-
-        Raises:
-            ValueError: if arguments' length is wrong or the operation has failed.
-        """
-    aad = ""
-    if not HAS_AEAD_AES256GCM:
-        raise ValueError('Underlying Sodium library does not support AES256-GCM AEAD')
-
-    if len(key) != crypto_aead_aes256gcm_KEYBYTES:
-        raise ValueError('Invalid key')
-
-    length = len(message)
-    maclen = ctypes.c_ulonglong()
-    c = ctypes.create_string_buffer(length)
-    mac = ctypes.create_string_buffer(crypto_aead_aes256gcm_ABYTES)
-    ret = nacl.crypto_aead_aes256gcm_encrypt_detached(
-        c,
-        mac, ctypes.pointer(maclen),
-        message, ctypes.c_ulonglong(len(message)),
-        aad, ctypes.c_ulonglong(len(aad)),
-        None,
-        iv, key)
-
-    if ret:
-        raise ValueError('Failed to encrypt message')
-    return c.raw, mac.raw
-
 def crypto_aead_aes256gcm_encrypt(message: bytes, nonce: bytes, key: hex):
     """Encrypts and authenticates a message with public additional data using the given secret key, and nonce
 
@@ -1163,8 +1121,8 @@ def crypto_sign_ed25519_sk_to_curve25519(ed25519_sk):
     '''
     Convert an Ed25519 secret key to a Curve25519 secret key
     '''
-    if len(ed25519_sk) != crypto_sign_ed25519_SECRETKEYBYTES:
-        raise ValueError('Invalid Ed25519 Key')
+    #if len(ed25519_sk) != crypto_sign_ed25519_SECRETKEYBYTES:
+     #   raise ValueError('Invalid Ed25519 Key')
 
     curve25519_sk = ctypes.create_string_buffer(crypto_scalarmult_curve25519_BYTES)
     ret = nacl.crypto_sign_ed25519_sk_to_curve25519(curve25519_sk, ed25519_sk)
