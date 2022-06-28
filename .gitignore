@@ -7,3 +7,4 @@ venv
 .env.local
 build
 dist
+/src/archethic.egg-info/
