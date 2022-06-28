@@ -1,9 +1,10 @@
-from .utils import is_hex, hex_to_uint8array, concat_uint8array, int_to_uint8array
+from archethic.utils import is_hex, hex_to_uint8array, concat_uint8array, int_to_uint8array
 from typing import Union
 import hashlib
 import hmac
 from archethic import libsodium
 from nacl.signing import SigningKey
+from Cryptodome.Cipher import AES
 
 SOFTWARE_ID = 1
 
@@ -75,34 +76,30 @@ def get_curve_name(curve_id: int):
 
 
 # Create a hash digest from the data with an hash algorithm identification prepending the digest
-def hash_digest(content: Union[str, bytearray], algo: str):
+def hash_digest(content: Union[str, bytes], algo: str):
     """
     Create a hash digest from the data with an hash algorithm identification prepending the digest
     :param content:
     :param algo:
     :return: hashed content
     """
-    isinstance(content, str or bytearray), 'Content must be a string or a bytearray'
+    isinstance(content, str or bytes), 'Content must be a string or a bytes'
 
     if type(content) == str:
         if is_hex(content):
-            content = hex_to_uint8array(content)
+            content = bytes.fromhex(content)
         else:
             content = content.encode()
 
     algo_id = get_hash_id(algo)
     digest = get_hash_digest(content, algo)
 
-    return concat_uint8array(
-        [
-            bytearray([algo_id]),
-            digest
-        ]
-    )
+    return bytearray([algo_id]) + digest
+
 
 
 # get hash digest
-def get_hash_digest(content: Union[str, bytearray], algo: str):
+def get_hash_digest(content: Union[str, bytes], algo: str):
     if algo == 'sha256':
         return hashlib.sha256(content).digest()
     elif algo == 'sha512':
@@ -153,20 +150,20 @@ def derive_private_key(seed, index: int) -> bytes:
 
     # derive final seed
     index_buf = int_to_uint8array(index)
-    extended_seed = concat_uint8array([master_key, index_buf])
+    extended_seed = master_key + index_buf
 
     hmacc = hmac.new(master_entropy,msg=extended_seed, digestmod="sha512")
     final_seed = hmacc.digest()
     return final_seed[:32]
 
 
-def generate_deterministic_keypair(private_key, curve: str, origin_id: int) -> (bytearray, bytearray):
+def generate_deterministic_keypair(private_key, curve: str, origin_id: int) -> (bytes, bytes):
     """
     Generate a new keypair deterministically with a given private key, curve and origin id
     :param private_key:
     :param curve:
     :param origin_id:
-    :return: (private key, public key)
+    :return: (private key, public key) in hex format
     """
     isinstance(curve, str), 'Curve must be a string'
     isinstance(origin_id, int), 'Origin id must be an integer'
@@ -176,19 +173,19 @@ def generate_deterministic_keypair(private_key, curve: str, origin_id: int) -> (
     public_key, pv_key = get_key_pair(private_key, curve)
 
     return (
-        concat_uint8array([bytearray([curve_id]), bytearray([origin_id]), private_key]).hex(),
-        concat_uint8array([bytearray([curve_id]), bytearray([origin_id]), public_key]).hex()
+        (bytearray([curve_id,origin_id]) + private_key).hex(),
+        (bytearray([curve_id,origin_id]) + public_key).hex()
     )
 
 
-def get_key_pair(private_key: bytearray, curve: str) -> (bytearray, bytearray):
+def get_key_pair(private_key: bytes, curve: str) -> (bytes, bytes):
     """
     Get the public and private key from a private key
     :param private_key:
     :param curve:
-    :return: (private key, public key)
+    :return: (private key, public key) in bytes format
     """
-    isinstance(private_key, bytearray), 'Private key must be a bytearray'
+    isinstance(private_key, bytes), 'Private key must be of type bytes'
     isinstance(curve, str), 'Curve must be a string'
 
     # Get private and public key
@@ -220,38 +217,34 @@ def derive_address(seed: str, index: int, curve: str = "ed25519", algo: str = "s
     assert index >= 0, 'Index must be a positive number'
 
     pv_key, public_key = derive_keypair(seed, index, curve)
-
     curve_id = get_curve_id(curve)
     hashed_public_key = hash_digest(public_key, algo)
 
-    return concat_uint8array(
-        [
-            bytearray([curve_id]),
-            hashed_public_key,
-        ]
+    return (
+            bytearray([curve_id]) + hashed_public_key
     ).hex()
 
 
-def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
+def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> hex:
     """
     Encrypt a data for a given public key using ECIES algorithm
     :param data: Data to encrypt
     :param public_key: Public key used to encrypt the data
-    :return: Encrypted data
+    :return: Encrypted data in hex format
     """
 
     isinstance(data, str or bytes), 'Data must be a string or a bytes'
-    isinstance(public_key, str or bytearray), 'Public key must be a string or a bytearray'
+    isinstance(public_key, str or bytes), 'Public key must be string or bytes'
 
     if type(data) == str:
         if is_hex(data):
-            data = hex_to_uint8array(data)
+            data = bytes.fromhex(data)
         else:
             data = data.encode()
 
     if type(public_key) == str:
         if is_hex(public_key):
-            public_key = hex_to_uint8array(public_key)
+            public_key = bytes.fromhex(public_key)
         else:
             raise ValueError('Public key must be a hex string')
 
@@ -261,22 +254,17 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
     if curve_buf == 0:
 
         ephemeral_public_key, ephemeral_private_key = libsodium.crypto_box_keypair()
-        curve25519_pub = libsodium.crypto_sign_ed25519_pk_to_curve25519(bytes(pub_buf))
+        curve25519_pub = libsodium.crypto_sign_ed25519_pk_to_curve25519(pub_buf)
 
         shared_key = libsodium.crypto_scalarmult_ed25519(ephemeral_private_key, curve25519_pub)
 
-        iv, aes_key = derive_secret(shared_key)
+        aes_key, iv = derive_secret(shared_key)
 
         encrypted, tag = aes_auth_encrypt(aes_key, iv, data)
 
+        return (ephemeral_public_key + tag + encrypted).hex()
 
-        return concat_uint8array(
-            [
-                bytearray(ephemeral_public_key),
-                tag,
-                encrypted
-            ]
-        )
+
 
     # TODO : implement prime256v1 encryption
     elif curve_buf == 1:
@@ -291,18 +279,67 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytearray]) -> hex:
 
 
 # TODO: implement ec_decrypt
-def ec_decrypt(data: Union[str,bytearray], private_key: Union[str,bytearray], curve: str = "ed25519") -> str:
+def ec_decrypt(ciphertext: Union[str,hex], private_key: Union[str,bytes], curve: str = "ed25519") -> any:
+    '''
+    Decrypt a ciphertext for a given private key using ECIES algorithm
+    :param ciphertext:
+    :param private_key:
+    :param curve:
+    :return:
+    '''
+    isinstance(ciphertext, str or bytes), 'Ciphertext must be a string or a bytes'
+    isinstance(private_key, str or bytes), 'Private key must be a string or a bytes'
+    isinstance(curve, str), 'Curve must be a string'
+
+
+
+    if type(ciphertext) == str:
+        if is_hex(ciphertext):
+            ciphertext = bytes.fromhex(ciphertext)
+        else:
+            ciphertext = ciphertext.encode()
+
+    if type(private_key) == str:
+        if is_hex(private_key):
+            private_key = bytes.fromhex(private_key)
+        else:
+            raise ValueError('Private key must be a hex string')
+
+    curve_buf = private_key[0]
+    priv_buf = private_key[2:]
+
+    if curve_buf == 0:
+
+        ephemeral_public_key = ciphertext[:32]
+        tag = ciphertext[32:48]
+        encrypted = ciphertext[48:]
+
+        curve_buf_pv = libsodium.crypto_sign_ed25519_sk_to_curve25519(priv_buf)
+
+        shared_key = libsodium.crypto_scalarmult_ed25519(curve_buf_pv, bytes(ephemeral_public_key))
+
+        aes_key, iv = derive_secret(shared_key)
+
+        return aes_auth_decrypt(bytes(encrypted), bytes(aes_key), bytes(iv), bytes(tag))
+
+
+
+
+
+
+
+
     raise NotImplementedError('ec decryption not implemented')
 
 
-def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytes, bytes):
+def derive_secret(shared_key: Union[str, bytes]) -> (bytes, bytes):
     """
     Derive a secret from a shared key and an index
     :param shared_key:
     :param index:
     :return: (secret, iv)
     """
-    isinstance(shared_key, str or bytearray or bytes), 'Shared key must be a string or a bytearray or bytes'
+    isinstance(shared_key, str or bytes), 'Shared key must be a string or bytes'
 
     if type(shared_key) == str:
         if is_hex(shared_key):
@@ -318,31 +355,68 @@ def derive_secret(shared_key: Union[str,bytearray, bytes]) -> (bytes, bytes):
     aes_key =  hmac.new(iv, "1".encode(), "sha256")
     aes_key = aes_key.digest()[:32]
 
-    return iv, aes_key
+    return aes_key, iv
 
 
 def aes_auth_encrypt(aes_key: bytes, iv: bytes, data: bytes) -> (bytes, bytes):
-    ciphertext, tag = libsodium.crypto_aead_aes256gcm_encrypt_detached(message=data,iv=iv,key=aes_key)
-    return ciphertext, tag
+    cipher = AES.new(aes_key, AES.MODE_GCM, iv)
+    return cipher.encrypt_and_digest(data)
 
+
+def aes_auth_decrypt(encrypted: bytes, aes_key: bytes, iv: bytes, tag: bytes) -> (bytes, bytes):
+    cipher = AES.new(aes_key, AES.MODE_GCM, iv)
+    data = cipher.decrypt(encrypted)
+    return data
 
 # TODO: implement aes_decrypt
-def aes_encrypt(data, key) -> bytearray:
+def aes_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> bytes:
     """
     Encrypt a data for a given public key using AES algorithm
     :param data:
-    :param key:
-    :return: encrypted data bytearray
+    :param public_key:
+    :return: encrypted data in bytes
     """
-    raise NotImplementedError('aes_encrypt not implemented')
+
+    isinstance(data, str or bytes), 'Data must be a string or a bytes'
+    isinstance(public_key, str or bytes), 'Public key must be a string or a bytes'
+
+    if type(data) == str:
+        if is_hex(data):
+            data = bytes.fromhex(data)
+        else:
+            data = data.encode()
+
+    if type(public_key) == str:
+        if is_hex(public_key):
+            public_key = bytes.fromhex(public_key)
+        else:
+            raise ValueError('Public key must be a hex string')
+
+    curve_buf = public_key[0]
+    pv_buf = public_key[2:]
+
+    if curve_buf == 0:
+        ephemeral_public_key = ciphertext[:32]
+        tag = ciphertext[32:64]
+        encrypted = ciphertext[64:]
+
+        curve_buf_pv = libsodium.crypto_sign_ed25519_sk_to_curve25519(bytes(pv_buf))
+        shared_key = libsodium.crypto_scalarmult_ed25519(curve_buf_pv ,ephemeral_public_key)
+
+        aes, iv = derive_secret(shared_key)
+
+        return
+
+    else:
+        raise ValueError("Curve not supported")
 
 
 # TODO: implement aes_decrypt
-def aes_decrypt(ciphertext, key) -> bytearray:
+def aes_decrypt(ciphertext, key) -> bytes:
     """
     Decrypt data for a given public key using AES algorithm
     :param data:
     :param key:
-    :return: encrypted data bytearray
+    :return: encrypted data bytes
     """
     raise NotImplementedError('aes_decrypt not implemented')
