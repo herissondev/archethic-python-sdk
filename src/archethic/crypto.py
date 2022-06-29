@@ -5,6 +5,7 @@ import hmac
 from archethic import libsodium
 from nacl.signing import SigningKey
 from Cryptodome.Cipher import AES
+from Cryptodome.Random import get_random_bytes
 
 SOFTWARE_ID = 1
 
@@ -278,7 +279,6 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> hex:
         raise ValueError("Curve not supported")
 
 
-# TODO: implement ec_decrypt
 def ec_decrypt(ciphertext: Union[str,hex], private_key: Union[str,bytes], curve: str = "ed25519") -> any:
     '''
     Decrypt a ciphertext for a given private key using ECIES algorithm
@@ -359,6 +359,13 @@ def derive_secret(shared_key: Union[str, bytes]) -> (bytes, bytes):
 
 
 def aes_auth_encrypt(aes_key: bytes, iv: bytes, data: bytes) -> (bytes, bytes):
+    '''
+    Encrypt a data using AES-256-GCM
+    :param aes_key: aes key in bytes
+    :param iv: iv in bytes
+    :param data: data in bytes
+    :return: (encrypted data, tag)
+    '''
     cipher = AES.new(aes_key, AES.MODE_GCM, iv)
     return cipher.encrypt_and_digest(data)
 
@@ -368,7 +375,7 @@ def aes_auth_decrypt(encrypted: bytes, aes_key: bytes, iv: bytes, tag: bytes) ->
     data = cipher.decrypt(encrypted)
     return data
 
-# TODO: implement aes_decrypt
+
 def aes_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> bytes:
     """
     Encrypt a data for a given public key using AES algorithm
@@ -392,31 +399,36 @@ def aes_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> bytes:
         else:
             raise ValueError('Public key must be a hex string')
 
-    curve_buf = public_key[0]
-    pv_buf = public_key[2:]
+    iv = get_random_bytes(12)
+    encrypted, tag = aes_auth_encrypt(public_key, iv, data)
 
-    if curve_buf == 0:
-        ephemeral_public_key = ciphertext[:32]
-        tag = ciphertext[32:64]
-        encrypted = ciphertext[64:]
-
-        curve_buf_pv = libsodium.crypto_sign_ed25519_sk_to_curve25519(bytes(pv_buf))
-        shared_key = libsodium.crypto_scalarmult_ed25519(curve_buf_pv ,ephemeral_public_key)
-
-        aes, iv = derive_secret(shared_key)
-
-        return
-
-    else:
-        raise ValueError("Curve not supported")
+    return iv + tag + encrypted
 
 
-# TODO: implement aes_decrypt
-def aes_decrypt(ciphertext, key) -> bytes:
+def aes_decrypt(ciphertext: Union[str, bytes], key: Union[str, bytes]) -> bytes:
     """
     Decrypt data for a given public key using AES algorithm
-    :param data:
-    :param key:
-    :return: encrypted data bytes
+    :param data: data in bytes or hex string
+    :param key: private key in bytes or hex string
+    :return: decrypted data in bytes
     """
-    raise NotImplementedError('aes_decrypt not implemented')
+    isinstance(ciphertext, str or bytes), 'Ciphertext must be of type string or bytes'
+    isinstance(key, str or bytes), 'Key must be of type string or bytes'
+
+    if type(ciphertext) == str:
+        if is_hex(ciphertext):
+            ciphertext = bytes.fromhex(ciphertext)
+        else:
+            raise ValueError('Ciphertext must be a hex string')
+
+    if type(key) == str:
+        if is_hex(key):
+            key = bytes.fromhex(key)
+        else:
+            raise ValueError('Key must be a hex string')
+
+    iv = ciphertext[:12]
+    tag = ciphertext[12:28]
+    encrypted = ciphertext[28:]
+
+    return aes_auth_decrypt(encrypted, key, iv, tag)
