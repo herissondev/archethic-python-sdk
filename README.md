@@ -31,7 +31,7 @@ Please to follow this workflow:
 - [x] derive_keypair()
 - [x] derive_address()
 - [x] ec_encrypt() 
-- [ ] aes_encrypt()
+- [x] aes_encrypt()
 
 ### Transaction building
 - [ ] create TransactionBuilder class (TB)
