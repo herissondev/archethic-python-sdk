@@ -99,7 +99,6 @@ def hash_digest(content: Union[str, bytes], algo: str):
     return bytearray([algo_id]) + digest
 
 
-
 # get hash digest
 def get_hash_digest(content: Union[str, bytes], algo: str):
     if algo == 'sha256':
