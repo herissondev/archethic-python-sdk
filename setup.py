@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import setuptools
 
 
-VERSION = "0.0.0.1"
+VERSION = "0.0.0.2"
 DESCRIPTION = "ArchEthic Python SDK"
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -10,7 +10,6 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 # Setting up
 setup(
-    # the name must match the folder name 'verysimplemodule'
     name="archethic",
     version=VERSION,
     author="Aimé Risson",
