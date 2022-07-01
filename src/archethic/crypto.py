@@ -6,6 +6,7 @@ from archethic import libsodium
 from nacl.signing import SigningKey
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
+from Crypto.Signature import eddsa
 
 SOFTWARE_ID = 1
 
@@ -432,3 +433,39 @@ def aes_decrypt(ciphertext: Union[str, bytes], key: Union[str, bytes]) -> bytes:
     encrypted = ciphertext[28:]
 
     return aes_auth_decrypt(encrypted, key, iv, tag)
+
+def sign(data: Union[str, bytes], private_key: Union[str, bytes]) -> bytes:
+    """
+    Sign a data using EdDSA algorithm
+    :param data:
+    :param private_key:
+    :return:
+    """
+    isinstance(data, str or bytes), 'Data must be of type string or bytes'
+    isinstance(private_key, str or bytes), 'Private key must be of type string or bytes'
+
+    if type(data) == str:
+        if is_hex(data):
+            data = bytes.fromhex(data)
+        else:
+            data = data.encode()
+
+    if type(private_key) == str:
+        if is_hex(private_key):
+            private_key = bytes.fromhex(private_key)
+        else:
+            raise ValueError('Private key must be a hex string')
+
+    curve_buf = private_key[0]
+    priv_buf = private_key[2:]
+
+    if curve_buf == 0:
+        key = eddsa.import_private_key(priv_buf)
+        signer = eddsa.new(key,mode='rfc8032')
+        return signer.sign(data)
+
+    elif curve_buf == 1:
+        raise NotImplementedError("secp256k1 signing not implemented yet")
+
+    else:
+        raise ValueError("Curve not supported")
