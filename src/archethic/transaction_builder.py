@@ -1,6 +1,6 @@
 from archethic import crypto, utils
 from typing import Union
-import json
+
 VERSION = 1
 
 TX_TYPES = {
@@ -20,10 +20,11 @@ class TransactionBuilder:
 
     def __init__(self, tx_type: str) -> None:
         """
-        Create a new instance of the transaction builder by specifying firstly the type of transaction
-        :param tx_type:  Transaction type ("keychain_access", "keychain", "transfer", "hosting", "code_proposal", "code_approval", "token")
+        Create a new instance of the transaction builder by specifying firstly the type of transaction :param
+        tx_type:  Transaction type ("keychain_access", "keychain", "transfer", "hosting", "code_proposal",
+        "code_approval", "token")
         """
-        self.origin_signature:bytes =  bytes()
+        self.origin_signature: bytes = bytes()
         self.address: bytes = bytes()
         self.previous_public_key: bytes = bytes()
         self.previous_signature: bytes = bytes()
@@ -108,7 +109,6 @@ class TransactionBuilder:
                 pass
             else:
                 raise TypeError("Encrypted secret key must be hex string or bytes")
-
 
             new_authorized_keys.append(
                 {
