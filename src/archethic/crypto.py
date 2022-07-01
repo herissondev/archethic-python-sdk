@@ -1,4 +1,4 @@
-from archethic.utils import is_hex, hex_to_uint8array, concat_uint8array, int_to_uint8array
+from archethic.utils import is_hex, hex_to_uint8array, concat_uint8array, int_to_32
 from typing import Union
 import hashlib
 import hmac
@@ -151,7 +151,7 @@ def derive_private_key(seed, index: int) -> bytes:
     master_entropy = hash[32:64]
 
     # derive final seed
-    index_buf = int_to_uint8array(index)
+    index_buf = int_to_32(index)
     extended_seed = master_key + index_buf
 
     hmacc = hmac.new(master_entropy,msg=extended_seed, digestmod="sha512")

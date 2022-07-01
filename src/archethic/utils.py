@@ -1,4 +1,4 @@
-
+from typing import Union
 #Origin private key
 import struct
 
@@ -31,13 +31,13 @@ def concat_uint8array(uint8array_list: list) -> bytearray:
     return bytearray(b''.join(uint8array_list))
 
 # Encode a integer into a Uint8Array (4 bytes)
-def int_to_uint8array(int_value: int) -> bytearray:
-    return bytearray(struct.pack("<I", int_value))
+def int_to_32(int_value: int) -> bytes:
+    return int_value.to_bytes(4, byteorder='big')
 
 
 # Encode a big integer into a Uint8Array (8 bytes)
-def big_int_to_uint8array(big_int_value: int) -> bytearray:
-    return bytearray(struct.pack("<Q", big_int_value))
+def int_to_64(big_int_value: int) -> bytes:
+    return big_int_value.to_bytes(8, byteorder='big')
 
 
 # Decode byte array (4 bytes) into an integer
@@ -46,5 +46,5 @@ def uint8array_to_int(uint8array: bytearray) -> int:
 
 
 # Convert any number into a big int for 10^8 decimals
-def to_big_int(number: int) -> int:
-    return number * 100000000
+def to_big_int(number: Union[int,float]) -> int:
+    return round(number * 100000000)
