@@ -34,22 +34,22 @@ Please to follow this workflow:
 - [x] aes_encrypt()
 
 ### Transaction building
-- [ ] create TransactionBuilder class (TB)
-- [ ] TB.set_code()
-- [ ] TB.set_content()
-- [ ] TB.add_ownership()
-- [ ] TB.add_UCO_transfer()
-- [ ] TB.add_NFT_transfer()
-- [ ] TB.add_recipient()
-- [ ] TB.build()
-- [ ] TB.origin_sign()
-- [ ] TB.toJSON()
-- [ ] Interacting with other signer
-  - [ ] TB.previous_signature_payload()
-  - [ ] TB.set_previous_signature_and_previous_public_key()
-  - [ ] TB.set_address()
-  - [ ] TB.origin_signature_payload()
-  - [ ] TB.set_origin_sign()
+- [x] create TransactionBuilder class (TB)
+- [x] TB.set_code()
+- [x] TB.set_content()
+- [x] TB.add_ownership()
+- [x] TB.add_UCO_transfer()
+- [x] TB.add_TOKEN_transfer()
+- [x] TB.add_recipient()
+- [x] TB.build()
+- [x] TB.origin_sign()
+- [x] TB.toJSON()
+- [x] Interacting with other signer
+  - [x] TB.previous_signature_payload()
+  - [x] TB.set_previous_signature_and_previous_public_key()
+  - [x] TB.set_address()
+  - [x] TB.origin_signature_payload()
+  - [x] TB.set_origin_sign()
 
 ### Remote Endpoint calls
 - [ ] addOriginKey()
