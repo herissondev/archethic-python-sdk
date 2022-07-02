@@ -1,3 +1,4 @@
+import json
 from archethic import crypto, utils
 from typing import Union
 
@@ -345,16 +346,17 @@ class TransactionBuilder:
 
     def origin_signature_payload(self):
         payload_for_previous_signature = self.previous_signature_payload()
+        print(f"payload_for_previous_signature : {payload_for_previous_signature.hex()}")
         return (
             payload_for_previous_signature
             + self.previous_public_key
-            + bytearray([len(self.previous_public_key)])
+            + bytearray([len(self.previous_signature)])
             + self.previous_signature
         )
 
     def json(self):
 
-        return {
+        data =  {
             "version": VERSION,
             "address": self.address.hex(),
             "type": self.tx_type,
@@ -371,11 +373,14 @@ class TransactionBuilder:
                     }
                 },
                 "recipients": [recipient.hex() for recipient in self.data["recipients"]],
-                "previousPublicKey": self.previous_public_key.hex(),
-                "previousSignature": self.previous_signature.hex(),
-                "originSignature": str(self.origin_signature) + self.origin_signature.hex()
-            }
+
+            },
+            "previousPublicKey": self.previous_public_key.hex(),
+            "previousSignature": self.previous_signature.hex(),
+            "originSignature": self.origin_signature.hex()
         }
+
+        return json.dumps(data)
 
 
 
