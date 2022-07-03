@@ -53,9 +53,9 @@ Please to follow this workflow:
 
 ### Remote Endpoint calls
 - [ ] addOriginKey()
-- [ ] TB.send_transaction()
+- [x] TB.send_transaction()
 - [ ] wait_confirmations()
-- [ ] get_transaction_index()
+- [x] get_transaction_index()
 - [ ] get_storage_nonce_public_key()
 - [ ] get_transaction_fee()
 - [ ] get_transaction_ownerships()
