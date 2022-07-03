@@ -7,6 +7,11 @@ from nacl.signing import SigningKey
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Crypto.Signature import eddsa
+from Crypto.PublicKey import ECC
+from fastecdsa import curve, ecdsa, keys
+from fastecdsa.encoding.der import DEREncoder
+
+import secp256k1
 
 SOFTWARE_ID = 1
 
@@ -200,6 +205,7 @@ def get_key_pair(private_key: bytes, curve: str) -> (bytes, bytes):
         raise NotImplementedError('P256 curve not implemented')
 
     elif curve == 'secp256k1':
+
         raise NotImplementedError('secp256k1 curve not implemented')
 
 
@@ -433,6 +439,7 @@ def aes_decrypt(ciphertext: Union[str, bytes], key: Union[str, bytes]) -> bytes:
 
     return aes_auth_decrypt(encrypted, key, iv, tag)
 
+
 def sign(data: Union[str, bytes], private_key: Union[str, bytes]) -> bytes:
     """
     Sign a data using EdDSA algorithm
@@ -464,7 +471,16 @@ def sign(data: Union[str, bytes], private_key: Union[str, bytes]) -> bytes:
         return signer.sign(data)
 
     elif curve_buf == 1:
-        raise NotImplementedError("secp256k1 signing not implemented yet")
+        r,s = ecdsa.sign(data, int(priv_buf.hex(), 16), curve=curve.P256)
+        print(f"DEREncoder: {DEREncoder.encode_signature(r, s).hex()}")
+        return DEREncoder.encode_signature(r,s)
+
+    elif curve_buf == 2:
+        hashData = hashlib.sha256(data).digest()
+        key = secp256k1.PrivateKey(priv_buf, raw=True)
+        sig_check = key.ecdsa_sign(hashData, raw=True)
+        return key.ecdsa_serialize_compact(sig_check)
+
 
     else:
         raise ValueError("Curve not supported")
