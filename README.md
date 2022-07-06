@@ -2,11 +2,8 @@
 This repo aims to provide a Python SDK for the ArchEthic project.<br>
 It is based on the [official javascript sdk](https://github.com/archethic-foundation/libjs).
 ## Installation
-Clone this repo with `git clone https://github.com/aime-risson/archethic-python-sdk.git` 
 
-Install requirements with `pip install -r requirements.txt`
-
-Finally, install the package with `python setup.py install`
+```pip install archethic```
 
 ## Contribution
 
