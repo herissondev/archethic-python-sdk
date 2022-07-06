@@ -1,16 +1,14 @@
 from archethic.utils import is_hex, hex_to_uint8array, concat_uint8array, int_to_32
-from typing import Union
-import hashlib
-import hmac
-from archethic import libsodium
 from nacl.signing import SigningKey
+from nacl import bindings
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Crypto.Signature import eddsa
-from Crypto.PublicKey import ECC
 from fastecdsa import curve, ecdsa, keys
 from fastecdsa.encoding.der import DEREncoder
-
+from typing import Union
+import hashlib
+import hmac
 import secp256k1
 
 SOFTWARE_ID = 1
@@ -260,10 +258,10 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> hex:
 
     if curve_buf == 0:
 
-        ephemeral_public_key, ephemeral_private_key = libsodium.crypto_box_keypair()
-        curve25519_pub = libsodium.crypto_sign_ed25519_pk_to_curve25519(pub_buf)
+        ephemeral_public_key, ephemeral_private_key = bindings.crypto_box_keypair()
+        curve25519_pub = bindings.crypto_sign_ed25519_pk_to_curve25519(pub_buf)
 
-        shared_key = libsodium.crypto_scalarmult_ed25519(ephemeral_private_key, curve25519_pub)
+        shared_key = bindings.crypto_scalarmult_ed25519(n=ephemeral_private_key, p=curve25519_pub)
 
         aes_key, iv = derive_secret(shared_key)
 
@@ -320,9 +318,9 @@ def ec_decrypt(ciphertext: Union[str,hex], private_key: Union[str,bytes], curve:
         tag = ciphertext[32:48]
         encrypted = ciphertext[48:]
 
-        curve_buf_pv = libsodium.crypto_sign_ed25519_sk_to_curve25519(priv_buf)
+        curve_buf_pv = bindings.crypto_sign_ed25519_sk_to_curve25519(priv_buf)
 
-        shared_key = libsodium.crypto_scalarmult_ed25519(curve_buf_pv, bytes(ephemeral_public_key))
+        shared_key = bindings.crypto_scalarmult_ed25519(curve_buf_pv, bytes(ephemeral_public_key))
 
         aes_key, iv = derive_secret(shared_key)
 
