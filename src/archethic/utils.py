@@ -1,7 +1,7 @@
 from typing import Union
-#Origin private key
 import struct
 
+#Origin private key
 ORIGIN_PRIVATE_KEY = '01019280BDB84B8F8AEDBA205FE3552689964A5626EE2C60AA10E3BF22A91A036009'
 
 

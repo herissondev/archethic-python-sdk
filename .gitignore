@@ -8,3 +8,4 @@ venv
 build
 dist
 /src/archethic.egg-info/
+**/*/**-test.py
