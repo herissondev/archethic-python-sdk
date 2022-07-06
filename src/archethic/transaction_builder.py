@@ -282,13 +282,8 @@ class TransactionBuilder:
         :return: The payload for the previous signature
         """
         buff_code_size = utils.int_to_32(len(self.data["content"]))
-        print(f"buff_code_size : {buff_code_size}")
-
         content_size = len(self.data["content"])
-        print(f"content_size : {content_size}")
-        #if type(self.data["content"]) == bytearray ??
         buf_content_size = utils.int_to_32(content_size)
-        print(f"buf_content_size : {buf_content_size}")
 
         ownerships_buffer = []
 
@@ -305,7 +300,6 @@ class TransactionBuilder:
             )
 
         uco_transfers_buffers = [transfer['to'] + utils.int_to_64(transfer['amount']) for transfer in self.data["ledger"]["uco"]["transfers"]]
-        print(f"uco_transfers_buffers : {uco_transfers_buffers[0].hex()}")
         token_transfers_buffers = [transfer['token'] + transfer['to'] + utils.int_to_64(transfer['amount']) + bytearray([transfer['token_id']]) for transfer in self.data["ledger"]["token"]["transfers"]]
 
         return (
@@ -346,7 +340,6 @@ class TransactionBuilder:
 
     def origin_signature_payload(self):
         payload_for_previous_signature = self.previous_signature_payload()
-        print(f"payload_for_previous_signature : {payload_for_previous_signature.hex()}")
         return (
             payload_for_previous_signature
             + self.previous_public_key
