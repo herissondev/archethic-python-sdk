@@ -17,7 +17,7 @@ setup(
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
-    install_requires=["PyNaCl", "libnacl", "requests", "pycryptodomex", "gql", "websockets", "fastecdsa", "secp256k1"],
+    install_requires=["PyNaCl", "libnacl", "requests", "pycryptodomex", "gql", "websockets", "fastecdsa", "secp256k1", "requests_toolbelt"],
     keywords=["python", "crypto", "archethic", "python archethic", "UCO"],
     classifiers=[
         "Programming Language :: Python :: 3",
