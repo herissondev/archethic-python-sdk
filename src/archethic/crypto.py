@@ -261,7 +261,7 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> hex:
         ephemeral_public_key, ephemeral_private_key = bindings.crypto_box_keypair()
         curve25519_pub = bindings.crypto_sign_ed25519_pk_to_curve25519(pub_buf)
 
-        shared_key = bindings.crypto_scalarmult_ed25519(n=ephemeral_private_key, p=curve25519_pub)
+        shared_key = bindings.crypto_scalarmult(ephemeral_private_key, p=curve25519_pub)
 
         aes_key, iv = derive_secret(shared_key)
 
@@ -320,7 +320,7 @@ def ec_decrypt(ciphertext: Union[str,hex], private_key: Union[str,bytes], curve:
 
         curve_buf_pv = bindings.crypto_sign_ed25519_sk_to_curve25519(priv_buf)
 
-        shared_key = bindings.crypto_scalarmult_ed25519(curve_buf_pv, bytes(ephemeral_public_key))
+        shared_key = bindings.crypto_scalarmult(curve_buf_pv, bytes(ephemeral_public_key))
 
         aes_key, iv = derive_secret(shared_key)
 
