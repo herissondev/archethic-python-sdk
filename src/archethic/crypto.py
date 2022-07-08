@@ -4,12 +4,16 @@ from nacl import bindings
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
 from Crypto.Signature import eddsa
-from fastecdsa import curve, ecdsa, keys
+from fastecdsa import ecdsa, keys
+from fastecdsa import curve as fst_curve
 from fastecdsa.encoding.der import DEREncoder
+from fastecdsa import keys, curve
+from fastecdsa.encoding.sec1 import SEC1Encoder
 from typing import Union
 import hashlib
 import hmac
 import secp256k1
+
 
 SOFTWARE_ID = 1
 
@@ -200,7 +204,10 @@ def get_key_pair(private_key: bytes, curve: str) -> (bytes, bytes):
         return pk.__bytes__(), sk.__bytes__()
 
     elif curve == 'P256':
-        raise NotImplementedError('P256 curve not implemented')
+        pv_key = int.from_bytes(private_key, 'big')
+        pub_key = keys.get_public_key(pv_key, fst_curve.P256)
+        return SEC1Encoder().encode_public_key(pub_key), private_key
+
 
     elif curve == 'secp256k1':
 
@@ -258,13 +265,13 @@ def ec_encrypt(data: Union[str,bytes], public_key: Union[str,bytes]) -> hex:
 
     if curve_buf == 0:
 
+        #ephemeral_public_key, ephemeral_private_key =
         ephemeral_public_key, ephemeral_private_key = bindings.crypto_box_keypair()
         curve25519_pub = bindings.crypto_sign_ed25519_pk_to_curve25519(pub_buf)
 
         shared_key = bindings.crypto_scalarmult(ephemeral_private_key, p=curve25519_pub)
 
         aes_key, iv = derive_secret(shared_key)
-
         encrypted, tag = aes_auth_encrypt(aes_key, iv, data)
 
         return (ephemeral_public_key + tag + encrypted).hex()
@@ -318,7 +325,9 @@ def ec_decrypt(ciphertext: Union[str,hex], private_key: Union[str,bytes], curve:
         tag = ciphertext[32:48]
         encrypted = ciphertext[48:]
 
-        curve_buf_pv = bindings.crypto_sign_ed25519_sk_to_curve25519(priv_buf)
+        # we add 32 bytes at the end of rhe private_key to simulate the presence of a public key
+        priv_buf_64 = priv_buf + b'\x00' * (64 - len(priv_buf))
+        curve_buf_pv = bindings.crypto_sign_ed25519_sk_to_curve25519(priv_buf_64)
 
         shared_key = bindings.crypto_scalarmult(curve_buf_pv, bytes(ephemeral_public_key))
 
@@ -470,7 +479,6 @@ def sign(data: Union[str, bytes], private_key: Union[str, bytes]) -> bytes:
 
     elif curve_buf == 1:
         r,s = ecdsa.sign(data, int(priv_buf.hex(), 16), curve=curve.P256)
-        print(f"DEREncoder: {DEREncoder.encode_signature(r, s).hex()}")
         return DEREncoder.encode_signature(r,s)
 
     elif curve_buf == 2:
@@ -482,3 +490,65 @@ def sign(data: Union[str, bytes], private_key: Union[str, bytes]) -> bytes:
 
     else:
         raise ValueError("Curve not supported")
+
+
+def verify(sig, data, public_key):
+    """
+    Verify a signature using EdDSA algorithm
+    :param sig:
+    :param data:
+    :param public_key:
+    :return:
+    """
+    isinstance(sig, str or bytes), 'Signature must be of type string or bytes'
+    isinstance(data, str or bytes), 'Data must be of type string or bytes'
+    isinstance(public_key, str or bytes), 'Public key must be of type string or bytes'
+
+    if type(sig) == str:
+        if is_hex(sig):
+            sig = bytes.fromhex(sig)
+        else:
+            raise ValueError('Signature must be a hex string')
+
+    if type(data) == str:
+        if is_hex(data):
+            data = bytes.fromhex(data)
+        else:
+            data = data.encode()
+
+    if type(public_key) == str:
+        if is_hex(public_key):
+            public_key = bytes.fromhex(public_key)
+        else:
+            raise ValueError('Public key must be a hex string')
+
+    curve_buf = public_key[0]
+    pub_buf = public_key[2:]
+
+    if curve_buf == 0:
+        key = eddsa.import_public_key(pub_buf)
+        verifier = eddsa.new(key,mode='rfc8032')
+
+        try:
+            returned = verifier.verify(data,sig)
+            if returned is None:
+                return True
+        except ValueError:
+            return False
+
+    elif curve_buf == 1:
+
+        r,s = DEREncoder.decode_signature(sig)
+        return ecdsa.verify((r,s), data , pub_buf, curve=curve.P256)
+
+    elif curve_buf == 2:
+
+        hashData = hashlib.sha256(data).digest()
+        key = secp256k1.PublicKey(pub_buf, raw=True)
+        sig_check = key.ecdsa_deserialize_compact(sig)
+        return key.ecdsa_verify(hashData, sig_check, raw=True)
+    else:
+        raise ValueError("Curve not supported")
+
+def random_secret_key():
+    return bytearray(get_random_bytes(32))
