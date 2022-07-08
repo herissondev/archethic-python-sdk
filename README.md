@@ -5,6 +5,35 @@ It is based on the [official javascript sdk](https://github.com/archethic-founda
 
 ```pip install archethic```
 
+## Example
+    
+```python
+import archethic
+
+api = archethic.Api("https://testnet.archethic.net")
+
+# make sure you have funds in your wallet !
+seed = 'mySuperSeed'
+ref_index = api.get_transaction_index(archethic.derive_address(seed, 0))
+
+rx_address = archethic.derive_address("rx_address", 0)
+
+tx = archethic.TransactionBuilder('transfer')
+tx.add_uco_transfer(rx_address, 10.102)
+tx.build(seed, ref_index)
+tx.origin_sign(archethic.ORIGIN_PRIVATE_KEY)
+
+transaction_fee = api.get_transaction_fee(tx)
+print(f"fee : {transaction_fee['fee']} UCOs")
+response = api.send_tx(tx)
+print(response)
+
+# prints :
+# fee : 0.12413171 UCOs
+# {'status': 'pending', 'transaction_address': '00008808978E67F37E0AFF023682AAB48843CF5B340A00B1F1C0668B003EC21E358F'}
+```
+
+
 ## Contribution
 
 Thank you for considering to help out with the source code. 
@@ -54,7 +83,7 @@ Please to follow this workflow:
 - [ ] wait_confirmations()
 - [x] get_transaction_index()
 - [ ] get_storage_nonce_public_key()
-- [ ] get_transaction_fee()
+- [x] get_transaction_fee()
 - [ ] get_transaction_ownerships()
 
 ### Keychain / Wallet management
