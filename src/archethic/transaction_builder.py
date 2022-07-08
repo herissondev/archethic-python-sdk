@@ -89,8 +89,9 @@ class TransactionBuilder:
         isinstance(authorized_keys, list), "Authorized keys must be list"
 
         new_authorized_keys = []
-        for (public_key, encrypted_secret_key) in authorized_keys:
-
+        for _authorized_key in authorized_keys:
+            public_key = _authorized_key.get("publicKey")
+            encrypted_secret_key = _authorized_key.get("encryptedSecretKey")
             if isinstance(public_key, str):
                 if not utils.is_hex(public_key):
                     raise ValueError("Public key must be hex string")
@@ -118,7 +119,7 @@ class TransactionBuilder:
                 }
             )
 
-        self.data["ownerships"].append({"secret": secret_key, "authorized_keys": new_authorized_keys})
+        self.data["ownerships"].append({"secret": secret_key, "authorizedKeys": new_authorized_keys})
         return
 
     def add_uco_transfer(self, send_to: Union[str, bytes], amount: float):
@@ -254,7 +255,6 @@ class TransactionBuilder:
         self.previous_public_key = bytes.fromhex(public_key)
 
         payload_for_previous_signature = self.previous_signature_payload()
-
         self.previous_signature = crypto.sign(payload_for_previous_signature, private_key)
         return
 
@@ -281,17 +281,21 @@ class TransactionBuilder:
         Generate the payload for the previous signature by encoding address, type and data
         :return: The payload for the previous signature
         """
-        buff_code_size = utils.int_to_32(len(self.data["content"]))
+        buff_code_size = utils.int_to_32(len(self.data["code"]))
         content_size = len(self.data["content"])
         buf_content_size = utils.int_to_32(content_size)
 
         ownerships_buffer = []
 
-        for (secret, authorizedKeys) in self.data["ownerships"]:
+        for ownership in self.data["ownerships"]:
+            authorizedKeys = ownership.get("authorizedKeys")
+            secret = ownership.get("secret")
             authorized_keys_buffer = [bytearray([len(authorizedKeys)])]
-            for (publicKey, encryptedSecretKey) in authorizedKeys:
-                authorized_keys_buffer.append(publicKey)
-                authorized_keys_buffer.append(encryptedSecretKey)
+            for _authorizedKey in authorizedKeys:
+                public_key = _authorizedKey.get("publicKey")
+                encrypted_secret_key = _authorizedKey.get("encryptedSecretKey")
+                authorized_keys_buffer.append(public_key)
+                authorized_keys_buffer.append(encrypted_secret_key)
 
             ownerships_buffer.append(
                 utils.int_to_32(len(bytes(secret))) +
@@ -356,7 +360,7 @@ class TransactionBuilder:
             "data": {
                 "content": self.data["content"].hex(),
                 "code": self.data["code"].decode("utf-8"),
-                "ownerships": [{"secret": secret.hex(), "authorizedKeys": [{"publicKey": publicKey.hex(), "encryptedSecretKey": encryptedSecretKey.hex()} for (publicKey, encryptedSecretKey) in authorizedKeys]} for (secret, authorizedKeys) in self.data["ownerships"]],
+                "ownerships": [{"secret": _ownership.get('secret').hex(), "authorizedKeys": [{"publicKey": _authorizedKey.get('publicKey').hex(), "encryptedSecretKey": _authorizedKey.get('encryptedSecretKey').hex()} for _authorizedKey in _ownership.get('authorizedKeys')]} for _ownership in self.data["ownerships"]],
                 "ledger": {
                     "uco": {
                         "transfers": [{"to": transfer["to"].hex(), "amount": transfer["amount"]} for transfer in self.data["ledger"]["uco"]["transfers"]]
