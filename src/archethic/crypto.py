@@ -122,7 +122,7 @@ def get_hash_digest(content: Union[str, bytes], algo: str):
         raise ValueError('Hash algorithm not supported')
 
 
-def derive_keypair(seed: str, index: int, curve: str = "ed25519") -> (hex, hex):
+def derive_keypair(seed: Union[str, bytes], index: int, curve: str = "ed25519") -> (hex, hex):
     """
     Generate a keypair using a derivation function with a seed and an index. Each keys is prepending with a curve identification.
     :param seed: Seed used to derive the keys
@@ -130,7 +130,11 @@ def derive_keypair(seed: str, index: int, curve: str = "ed25519") -> (hex, hex):
     :param curve: Curve used to derive the keys
     :return: (private key, public key)
     """
-    isinstance(seed, str), 'Seed must be a string'
+    if isinstance(seed, bytes):
+        seed = seed.decode('utf8')
+    elif not isinstance(seed, str):
+        raise ValueError('Seed must be a string or bytes')
+
     isinstance(index, int), 'Index must be an integer'
     assert index >= 0, 'Index must be a positive number'
     isinstance(curve, str), 'Curve must be a string'
