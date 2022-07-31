@@ -13,12 +13,11 @@ TX_TYPES = {
     "token": 251,
     # Network based transaction types
     "code_proposal": 7,
-    "code_approval": 8
+    "code_approval": 8,
 }
 
 
 class TransactionBuilder:
-
     def __init__(self, tx_type: str) -> None:
         """
         Create a new instance of the transaction builder by specifying firstly the type of transaction :param
@@ -29,8 +28,10 @@ class TransactionBuilder:
         self.address: bytes = bytes()
         self.previous_public_key: bytes = bytes()
         self.previous_signature: bytes = bytes()
-        assert tx_type in TX_TYPES, "Invalid transaction type. \n Transaction type must be 'transfer', 'hosting', " \
-                                    "'keychain_access', 'keychain',  'token', 'code_proposal', 'code_approval' "
+        assert tx_type in TX_TYPES, (
+            "Invalid transaction type. \n Transaction type must be 'transfer', 'hosting', "
+            "'keychain_access', 'keychain',  'token', 'code_proposal', 'code_approval' "
+        )
 
         self.version = VERSION
         self.tx_type = tx_type
@@ -70,7 +71,9 @@ class TransactionBuilder:
             raise TypeError("Content must be string or bytes")
         return
 
-    def add_ownership(self, secret_key: Union[str, bytes], authorized_keys: list) -> None:
+    def add_ownership(
+        self, secret_key: Union[str, bytes], authorized_keys: list
+    ) -> None:
         """
         Add an ownership with a secret and its authorized public keys to the transaction
         :param secret_key: The secret key of the ownership (str or bytes)
@@ -119,7 +122,9 @@ class TransactionBuilder:
                 }
             )
 
-        self.data["ownerships"].append({"secret": secret_key, "authorizedKeys": new_authorized_keys})
+        self.data["ownerships"].append(
+            {"secret": secret_key, "authorizedKeys": new_authorized_keys}
+        )
         return
 
     def add_uco_transfer(self, send_to: Union[str, bytes], amount: float):
@@ -141,10 +146,18 @@ class TransactionBuilder:
         isinstance(amount, float or int), "Amount must be float or int"
         assert amount > 0, "Amount must be greater than 0"
 
-        self.data["ledger"]["uco"]["transfers"].append({"to": send_to, "amount": utils.to_big_int(amount)})
+        self.data["ledger"]["uco"]["transfers"].append(
+            {"to": send_to, "amount": utils.to_big_int(amount)}
+        )
         return
 
-    def add_token_transfer(self, send_to: Union[str, bytes], amount: float, token_adress: Union[str, bytes], token_id: int):
+    def add_token_transfer(
+        self,
+        send_to: Union[str, bytes],
+        amount: float,
+        token_adress: Union[str, bytes],
+        token_id: int,
+    ):
         """
         Add a token transfer to the transaction
         :param send_to: The public key of the receiver
@@ -179,7 +192,14 @@ class TransactionBuilder:
         isinstance(token_id, int), "Token id must be int"
         assert token_id >= 0, "Token id must be greater or equal to 0"
 
-        self.data["ledger"]["token"]["transfers"].append({"to": send_to, "amount": utils.to_big_int(amount), "token": token_adress, "token_id": token_id})
+        self.data["ledger"]["token"]["transfers"].append(
+            {
+                "to": send_to,
+                "amount": utils.to_big_int(amount),
+                "token": token_adress,
+                "token_id": token_id,
+            }
+        )
         return
 
     def add_recipient(self, send_to: Union[str, bytes]):
@@ -200,7 +220,9 @@ class TransactionBuilder:
         self.data["recipients"].append(send_to)
         return
 
-    def set_previous_signature_and_previous_public_key(self, signature: Union[str, bytes], public_key: Union[str, bytes]) -> None:
+    def set_previous_signature_and_previous_public_key(
+        self, signature: Union[str, bytes], public_key: Union[str, bytes]
+    ) -> None:
         """
         Set the transaction builder with Previous Publickey and Previous Signature
         :param signature: The previous signature of the transaction
@@ -248,14 +270,22 @@ class TransactionBuilder:
         self.address = address
         return
 
-    def build(self, seed: Union[str, bytes], index: int, curve: str = "ed25519", hash_algo: str = "sha256") -> None:
+    def build(
+        self,
+        seed: Union[str, bytes],
+        index: int,
+        curve: str = "ed25519",
+        hash_algo: str = "sha256",
+    ) -> None:
         private_key, public_key = crypto.derive_keypair(seed, index, curve)
-        address = crypto.derive_address(seed, index+1, curve, hash_algo)
+        address = crypto.derive_address(seed, index + 1, curve, hash_algo)
         self.set_address(address)
         self.previous_public_key = bytes.fromhex(public_key)
 
         payload_for_previous_signature = self.previous_signature_payload()
-        self.previous_signature = crypto.sign(payload_for_previous_signature, private_key)
+        self.previous_signature = crypto.sign(
+            payload_for_previous_signature, private_key
+        )
         return
 
     def origin_sign(self, private_key: Union[str, bytes]) -> None:
@@ -273,7 +303,9 @@ class TransactionBuilder:
         else:
             raise TypeError("Private key must be hex string or bytes")
 
-        self.origin_signature = crypto.sign(self.origin_signature_payload(), private_key)
+        self.origin_signature = crypto.sign(
+            self.origin_signature_payload(), private_key
+        )
         return
 
     def previous_signature_payload(self):
@@ -292,7 +324,10 @@ class TransactionBuilder:
             secret = ownership.get("secret")
 
             buff_auth_key_length = bytearray([len(authorizedKeys)])
-            authorized_keys_buffer = [bytearray([len(buff_auth_key_length)]), buff_auth_key_length]
+            authorized_keys_buffer = [
+                bytearray([len(buff_auth_key_length)]),
+                buff_auth_key_length,
+            ]
 
             for _authorizedKey in authorizedKeys:
                 public_key = _authorizedKey.get("publicKey")
@@ -301,18 +336,31 @@ class TransactionBuilder:
                 authorized_keys_buffer.append(encrypted_secret_key)
 
             ownerships_buffer.append(
-                utils.int_to_32(len(bytes(secret))) +
-                secret +
-                b''.join(authorized_keys_buffer)
+                utils.int_to_32(len(bytes(secret)))
+                + secret
+                + b"".join(authorized_keys_buffer)
             )
 
-        uco_transfers_buffers = [transfer['to'] + utils.int_to_64(transfer['amount']) for transfer in self.data["ledger"]["uco"]["transfers"]]
-        token_transfers_buffers = [transfer['token'] + transfer['to'] + utils.int_to_64(transfer['amount']) + bytearray([transfer['token_id']]) for transfer in self.data["ledger"]["token"]["transfers"]]
+        uco_transfers_buffers = [
+            transfer["to"] + utils.int_to_64(transfer["amount"])
+            for transfer in self.data["ledger"]["uco"]["transfers"]
+        ]
+        token_transfers_buffers = [
+            transfer["token"]
+            + transfer["to"]
+            + utils.int_to_64(transfer["amount"])
+            + bytearray([transfer["token_id"]])
+            for transfer in self.data["ledger"]["token"]["transfers"]
+        ]
 
-        buf_ownership_length = bytearray([len(self.data['ownerships'])])
-        buf_uco_transfer_length = bytearray([len(self.data['ledger']['uco']['transfers'])])
-        buf_token_transfer_length = bytearray([len(self.data['ledger']['token']['transfers'])])
-        buf_recipient_length = bytearray([len(self.data['recipients'])])
+        buf_ownership_length = bytearray([len(self.data["ownerships"])])
+        buf_uco_transfer_length = bytearray(
+            [len(self.data["ledger"]["uco"]["transfers"])]
+        )
+        buf_token_transfer_length = bytearray(
+            [len(self.data["ledger"]["token"]["transfers"])]
+        )
+        buf_recipient_length = bytearray([len(self.data["recipients"])])
 
         return (
             utils.int_to_32(VERSION)
@@ -327,19 +375,19 @@ class TransactionBuilder:
             # ownerships
             + bytearray([len(buf_ownership_length)])
             + buf_ownership_length
-            + b''.join(ownerships_buffer)
+            + b"".join(ownerships_buffer)
             # uco transfers
             + bytearray([len(buf_uco_transfer_length)])
             + buf_uco_transfer_length
-            + b''.join(uco_transfers_buffers)
+            + b"".join(uco_transfers_buffers)
             # token transfers
             + bytearray([len(buf_token_transfer_length)])
             + buf_token_transfer_length
-            + b''.join(token_transfers_buffers)
+            + b"".join(token_transfers_buffers)
             # recipients
             + bytearray([len(buf_recipient_length)])
             + buf_recipient_length
-            + b''.join(self.data["recipients"])
+            + b"".join(self.data["recipients"])
         )
 
     def set_origin_sign(self, signature: Union[str, bytes]) -> None:
@@ -371,32 +419,54 @@ class TransactionBuilder:
 
     def json(self):
 
-        data =  {
+        data = {
             "version": VERSION,
             "address": self.address.hex(),
             "type": self.tx_type,
             "data": {
                 "content": self.data["content"].hex(),
                 "code": self.data["code"].decode("utf-8"),
-                "ownerships": [{"secret": _ownership.get('secret').hex(), "authorizedKeys": [{"publicKey": _authorizedKey.get('publicKey').hex(), "encryptedSecretKey": _authorizedKey.get('encryptedSecretKey').hex()} for _authorizedKey in _ownership.get('authorizedKeys')]} for _ownership in self.data["ownerships"]],
+                "ownerships": [
+                    {
+                        "secret": _ownership.get("secret").hex(),
+                        "authorizedKeys": [
+                            {
+                                "publicKey": _authorizedKey.get("publicKey").hex(),
+                                "encryptedSecretKey": _authorizedKey.get(
+                                    "encryptedSecretKey"
+                                ).hex(),
+                            }
+                            for _authorizedKey in _ownership.get("authorizedKeys")
+                        ],
+                    }
+                    for _ownership in self.data["ownerships"]
+                ],
                 "ledger": {
                     "uco": {
-                        "transfers": [{"to": transfer["to"].hex(), "amount": transfer["amount"]} for transfer in self.data["ledger"]["uco"]["transfers"]]
+                        "transfers": [
+                            {"to": transfer["to"].hex(), "amount": transfer["amount"]}
+                            for transfer in self.data["ledger"]["uco"]["transfers"]
+                        ]
                     },
                     "token": {
-                        "transfers": [{"to": transfer["to"].hex(), "token": transfer["token"].hex(),  "amount": transfer["amount"], "token_id": transfer["token_id"]} for transfer in self.data["ledger"]["token"]["transfers"]]
-                    }
+                        "transfers": [
+                            {
+                                "to": transfer["to"].hex(),
+                                "token": transfer["token"].hex(),
+                                "amount": transfer["amount"],
+                                "token_id": transfer["token_id"],
+                            }
+                            for transfer in self.data["ledger"]["token"]["transfers"]
+                        ]
+                    },
                 },
-                "recipients": [recipient.hex() for recipient in self.data["recipients"]],
-
+                "recipients": [
+                    recipient.hex() for recipient in self.data["recipients"]
+                ],
             },
             "previousPublicKey": self.previous_public_key.hex(),
             "previousSignature": self.previous_signature.hex(),
-            "originSignature": self.origin_signature.hex()
+            "originSignature": self.origin_signature.hex(),
         }
 
         return json.dumps(data)
-
-
-
-
