@@ -290,7 +290,10 @@ class TransactionBuilder:
         for ownership in self.data["ownerships"]:
             authorizedKeys = ownership.get("authorizedKeys")
             secret = ownership.get("secret")
-            authorized_keys_buffer = [bytearray([len(authorizedKeys)])]
+
+            buff_auth_key_length = bytearray([len(authorizedKeys)])
+            authorized_keys_buffer = [bytearray([len(buff_auth_key_length)]), buff_auth_key_length]
+
             for _authorizedKey in authorizedKeys:
                 public_key = _authorizedKey.get("publicKey")
                 encrypted_secret_key = _authorizedKey.get("encryptedSecretKey")
@@ -306,21 +309,36 @@ class TransactionBuilder:
         uco_transfers_buffers = [transfer['to'] + utils.int_to_64(transfer['amount']) for transfer in self.data["ledger"]["uco"]["transfers"]]
         token_transfers_buffers = [transfer['token'] + transfer['to'] + utils.int_to_64(transfer['amount']) + bytearray([transfer['token_id']]) for transfer in self.data["ledger"]["token"]["transfers"]]
 
+        buf_ownership_length = bytearray([len(self.data['ownerships'])])
+        buf_uco_transfer_length = bytearray([len(self.data['ledger']['uco']['transfers'])])
+        buf_token_transfer_length = bytearray([len(self.data['ledger']['token']['transfers'])])
+        buf_recipient_length = bytearray([len(self.data['recipients'])])
+
         return (
             utils.int_to_32(VERSION)
             + self.address
             + bytearray([TX_TYPES[self.tx_type]])
+            # code
             + buff_code_size
             + self.data["code"]
+            # content
             + buf_content_size
             + self.data["content"]
-            + bytearray([len(self.data["ownerships"])])
+            # ownerships
+            + bytearray([len(buf_ownership_length)])
+            + buf_ownership_length
             + b''.join(ownerships_buffer)
-            + bytearray([len(self.data["ledger"]["uco"]["transfers"])])
+            # uco transfers
+            + bytearray([len(buf_uco_transfer_length)])
+            + buf_uco_transfer_length
             + b''.join(uco_transfers_buffers)
-            + bytearray([len(self.data["ledger"]["token"]["transfers"])])
+            # token transfers
+            + bytearray([len(buf_token_transfer_length)])
+            + buf_token_transfer_length
             + b''.join(token_transfers_buffers)
-            + bytearray([len(self.data["recipients"])])
+            # recipients
+            + bytearray([len(buf_recipient_length)])
+            + buf_recipient_length
             + b''.join(self.data["recipients"])
         )
 
