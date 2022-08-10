@@ -84,7 +84,7 @@ Please to follow this workflow:
 - [x] get_transaction_index()
 - [ ] get_storage_nonce_public_key()
 - [x] get_transaction_fee()
-- [ ] get_transaction_ownerships()
+- [x] get_transaction_ownerships()
 
 ### Keychain / Wallet management
 comming soon
