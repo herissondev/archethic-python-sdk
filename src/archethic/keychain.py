@@ -252,7 +252,7 @@ def key_to_jwk(publickey: Union[str, bytes], key_id: str) -> Dict[str, str]:
 
     if curve_id == 0:
         return {
-            "kty": "EC",
+            "kty": "OKP",
             "crv": "Ed25519",
             "x": to_base64_url(key),
             "kid": key_id,
