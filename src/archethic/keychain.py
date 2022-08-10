@@ -248,7 +248,7 @@ def key_to_jwk(publickey: Union[str, bytes], key_id: str) -> Dict[str, str]:
             "kid": key_id,
         }
     else:
-        raise ValueError("Curve not supported yet")
+        raise ValueError("Curve not supported")
 
 
 def to_base64_url(data: bytes or str) -> str:
