@@ -45,7 +45,7 @@ class Keychain:
         self.add_service("uco", "m/650'/0/0")
 
     @classmethod
-    def keychain_from_binary(cls, binary: bytes):
+    def from_binary(cls, binary: bytes):
         """Return a keychain from a binary data"""
         pos = 0
         version, pos = read_bytes(binary, pos, 4)
