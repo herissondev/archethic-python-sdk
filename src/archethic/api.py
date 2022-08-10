@@ -94,6 +94,30 @@ class Api:
         except TransportQueryError as e:
             return []
 
+    def get_keychain(self, seed: Union[str, bytes]):
+        access_private_key, access_public_key = derive_keypair(seed, 0)
+        access_keychain_address = derive_address(seed, 1)
+
+        ownerships = self.get_transaction_ownerships(access_keychain_address)
+        if len(ownerships) == 0:
+            raise Exception("Keychain doesn't exist!")
+
+        secret, public_keys = ownerships[0]['secret'], ownerships[0]['authorizedPublicKeys']
+
+        encrypted_secret_key = [p['encryptedSecretKey'] for p in public_keys if p['publicKey'].upper() == access_public_key.upper()][0]
+
+        aes_key = ec_decrypt(encrypted_secret_key, access_private_key)
+        keychain_address = aes_decrypt(secret, aes_key)
+
+        ownerships = self.get_transaction_ownerships(keychain_address.hex())
+        secret, public_keys = ownerships[0]['secret'], ownerships[0]['authorizedPublicKeys']
+
+        encrypted_secret_key = [p['encryptedSecretKey'] for p in public_keys if p['publicKey'].upper() == access_public_key.upper()][0]
+        aes_key = ec_decrypt(encrypted_secret_key, access_private_key)
+        keychain_binary = aes_decrypt(secret, aes_key)
+
+        return Keychain.from_binary(keychain_binary)
+
 
 
 
