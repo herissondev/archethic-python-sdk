@@ -1,10 +1,11 @@
 from archethic.transaction_builder import TransactionBuilder
-from archethic.utils import int_to_32, int_to_64
+from archethic.utils import int_to_32, int_to_64, uint8array_to_int
 from archethic.crypto import (
     generate_deterministic_keypair,
     derive_address,
     hash_digest,
     get_curve_id,
+    get_curve_name,
     get_hash_id,
     random_secret_key,
     ec_encrypt,
