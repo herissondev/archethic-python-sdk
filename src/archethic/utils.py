@@ -41,7 +41,7 @@ def int_to_64(big_int_value: int) -> bytes:
 
 
 # Decode byte array (4 bytes) into an integer
-def uint8array_to_int(uint8array: bytearray) -> int:
+def uint8array_to_int(uint8array: Union[bytes, bytearray]) -> int:
     return struct.unpack("<I", uint8array)[0]
 
 
