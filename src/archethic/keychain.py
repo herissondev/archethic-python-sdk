@@ -283,3 +283,11 @@ def key_to_jwk(publickey: Union[str, bytes], key_id: str) -> Dict[str, str]:
 
 def to_base64_url(data: bytes or str) -> str:
     return base64.urlsafe_b64encode(data).replace(b"=", b"").decode()
+
+
+def read_byte(binary: bytes, pos: int, size: int ) -> (bytes, int):
+    return binary[pos:pos+size][0], pos+size
+
+
+def read_bytes(binary: bytes, pos: int, size: int) -> (bytes, int):
+    return binary[pos:pos+size], pos+size
