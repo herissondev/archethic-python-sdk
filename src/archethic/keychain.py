@@ -44,6 +44,35 @@ class Keychain:
 
         self.add_service("uco", "m/650'/0/0")
 
+    @classmethod
+    def keychain_from_binary(cls, binary: bytes):
+        """Return a keychain from a binary data"""
+        pos = 0
+        version, pos = read_bytes(binary, pos, 4)
+        seed_length, pos = read_byte(binary, pos, 1)
+        seed, pos = read_bytes(binary, pos, seed_length)
+        service_count, pos = read_byte(binary, pos, 1)
+
+        keychain = cls(seed, uint8array_to_int(version))
+
+        for i in range(service_count):
+            service_length, pos = read_byte(binary, pos, 1)
+            service, pos = read_bytes(binary, pos, service_length)
+            derivation_path_length, pos = read_byte(binary, pos, 1)
+            derivation_path, pos = read_bytes(binary, pos, derivation_path_length)
+            curve_id, pos = read_byte(binary, pos, 1)
+            hash_id, pos = read_byte(binary, pos, 1)
+
+            service_name = service.decode()
+            derivation_path_name = derivation_path.decode()
+
+            keychain.add_service(service_name, derivation_path_name, get_curve_name(curve_id), get_hash_name(hash_id))
+
+        return keychain
+
+
+
+
     @staticmethod
     def new_keychain_transaction(
         seed: Union[str, bytes],
