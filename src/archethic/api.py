@@ -1,5 +1,8 @@
 from archethic.transaction_builder import TransactionBuilder
+from archethic.keychain import Keychain
+from archethic.crypto import derive_address, derive_keypair, verify, ec_decrypt, aes_decrypt
 import requests
+from typing import Union
 from urllib.parse import urlparse
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
