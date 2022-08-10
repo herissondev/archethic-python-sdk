@@ -124,15 +124,14 @@ def get_hash_digest(content: Union[str, bytes], algo: str):
 
 def derive_keypair(seed: Union[str, bytes], index: int, curve: str = "ed25519") -> (hex, hex):
     """
-    Generate a keypair using a derivation function with a seed and an index. Each keys is prepending with a curve identification.
+    Generate a keypair using a derivation function with a seed and an index. Each key are prepending with a curve identification.
     :param seed: Seed used to derive the keys
     :param index: Index used to derive the keys
     :param curve: Curve used to derive the keys
     :return: (private key, public key)
     """
-    if isinstance(seed, bytes):
-        seed = seed.decode('utf8')
-    elif not isinstance(seed, str):
+
+    if not isinstance(seed, str) and not isinstance(seed, bytes):
         raise ValueError('Seed must be a string or bytes')
 
     isinstance(index, int), 'Index must be an integer'
@@ -152,11 +151,18 @@ def derive_private_key(seed, index: int) -> bytes:
     :param index:
     :return: private_key
     """
-    if is_hex(seed):
-        seed = hex_to_uint8array(seed)
+    print(f"seed: {seed}")
+    if isinstance(seed, str):
+        if is_hex(seed):
+            seed = bytes.fromhex(seed)
+        else:
+            seed = seed.encode()
+
+
+
 
     # derive master keys
-    hash = hashlib.sha512(seed.encode()).digest()
+    hash = hashlib.sha512(seed).digest()
     master_key = hash[:32]
     master_entropy = hash[32:64]
 
@@ -219,7 +225,7 @@ def get_key_pair(private_key: bytes, curve: str) -> (bytes, bytes):
 
 
 #Derive an address from a seed, an index, an elliptic curve and an hash algorithm.
-def derive_address(seed: str, index: int, curve: str = "ed25519", algo: str = "sha256") -> hex:
+def derive_address(seed: Union[str, bytes], index: int, curve: str = "ed25519", algo: str = "sha256") -> hex:
     """
     Derive an address from a seed, an index, an elliptic curve and an hash algorithm.
     :param seed: Seed used to derive the address
@@ -228,7 +234,9 @@ def derive_address(seed: str, index: int, curve: str = "ed25519", algo: str = "s
     :param algo: Hash algorithm used to derive the address ("sha256", "sha512", "sha3-256", "sha3-512", "blake2b")
     :return: Address
     """
-    isinstance(seed, str), 'Seed must be a string'
+    if not (isinstance(seed, str) or isinstance(seed, bytes)):
+        raise AssertionError('Seed must be a string or bytes')
+
     isinstance(index, int), 'Index must be an integer'
     assert index >= 0, 'Index must be a positive number'
 
@@ -554,5 +562,6 @@ def verify(sig, data, public_key):
     else:
         raise ValueError("Curve not supported")
 
+
 def random_secret_key():
-    return bytearray(get_random_bytes(32))
+    return bytes(get_random_bytes(32))
