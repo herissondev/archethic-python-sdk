@@ -23,7 +23,6 @@ KEYCHAIN_ORIGIN_ID = 0
 
 
 class Keychain:
-
     def __init__(self, seed: Union[str, bytes], version: int = 1) -> None:
         """
 
@@ -45,12 +44,15 @@ class Keychain:
         self.add_service("uco", "m/650'/0/0")
 
     @staticmethod
-    def new_keychain_transaction(seed: Union[str, bytes], authorized_public_keys: [],
-                                 origin_private_key: Union[str, bytes]) -> TransactionBuilder:
+    def new_keychain_transaction(
+        seed: Union[str, bytes],
+        authorized_public_keys: [],
+        origin_private_key: Union[str, bytes],
+    ) -> TransactionBuilder:
         """
         Creates a new keychain transaction
         """
-        print(type(seed))
+
         keychain = Keychain(seed)
         aes_key = random_secret_key()
 
@@ -58,14 +60,12 @@ class Keychain:
 
         for key in authorized_public_keys:
             authorized_keys.append(
-                {
-                    "publicKey": key,
-                    "encryptedSecretKey": ec_encrypt(aes_key, key)
-                }
+                {"publicKey": key, "encryptedSecretKey": ec_encrypt(aes_key, key)}
             )
 
         tx = TransactionBuilder("keychain")
         tx.set_content(json.dumps(keychain.to_did()))
+
         tx.add_ownership(aes_encrypt(keychain.encode(), aes_key), authorized_keys)
         tx.build(seed, 0)
         tx.origin_sign(origin_private_key)
@@ -209,8 +209,9 @@ def replace_derivation_path_index(path: str, index):
 
 
 def key_to_jwk(publickey: Union[str, bytes], key_id: str) -> Dict[str, str]:
+
     if isinstance(publickey, str):
-        publickey = publickey.encode()
+        publickey = bytes.fromhex(publickey)
     elif isinstance(publickey, bytes):
         pass
     else:
@@ -226,7 +227,28 @@ def key_to_jwk(publickey: Union[str, bytes], key_id: str) -> Dict[str, str]:
             "x": to_base64_url(key),
             "kid": key_id,
         }
-
+    elif curve_id == 1:
+        x = key[:16]
+        y = key[16:]
+        return {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": to_base64_url(x),
+            "y": to_base64_url(y),
+            "kid": key_id,
+        }
+    elif curve_id == 1:
+        x = key[:16]
+        y = key[16:]
+        return {
+            "kty": "EC",
+            "crv": "secp256k1",
+            "x": to_base64_url(x),
+            "y": to_base64_url(y),
+            "kid": key_id,
+        }
+    else:
+        raise ValueError("Curve not supported yet")
 
 
 def to_base64_url(data: bytes or str) -> str:
