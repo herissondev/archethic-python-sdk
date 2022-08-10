@@ -1,8 +1,9 @@
 from archethic.transaction_builder import TransactionBuilder
-from archethic.utils import int_to_32, int_to_64, uint8array_to_int
+from archethic.utils import int_to_32, int_to_64, uint8array_to_int, is_hex
 from archethic.crypto import (
     generate_deterministic_keypair,
     derive_address,
+    derive_keypair,
     hash_digest,
     get_curve_id,
     get_curve_name,
@@ -70,8 +71,31 @@ class Keychain:
 
         return keychain
 
+    @staticmethod
+    def new_access_keychain_transaction(seed: Union[str, bytes], keychain_address: Union[str, bytes], origin_private_key: Union[str, bytes]) -> TransactionBuilder:
+        """
+        Create a new access keychain and build a transaction.
+        :param seed:
+        :param keychain_address:
+        :return:
+        """
+        # todo add assertion for all variables
 
+        aes_key = random_secret_key()
+        sk, pk = derive_keypair(seed, 0)
 
+        encrypted_secret_key = ec_encrypt(aes_key, pk)
+
+        authorized_keys = [{
+            "publicKey": pk,
+            "encryptedSecretKey": encrypted_secret_key,
+        }]
+
+        tx = TransactionBuilder("keychain_access")
+        tx.add_ownership(aes_encrypt(keychain_address, aes_key), authorized_keys)
+        tx.build(seed,0)
+        tx.origin_sign(origin_private_key)
+        return tx
 
     @staticmethod
     def new_keychain_transaction(
