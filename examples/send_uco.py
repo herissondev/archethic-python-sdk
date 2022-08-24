@@ -12,7 +12,7 @@ ref_seed_index = api.get_transaction_index(seed_address)
 receiver_address = archethic.derive_address('receiver', 0)
 
 transaction = archethic.TransactionBuilder('transfer')
-transaction.add_uco_transfer(receiver_address, 10)
+transaction.add_uco_transfer("00000f3ff5cdb8af62c10612147b50ffc2b7b1559e998f5a24784d2d0686b914e1f2", 10)
 transaction.build(seed, ref_seed_index)
 transaction.origin_sign(origin)
 
