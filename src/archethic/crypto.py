@@ -3,7 +3,7 @@ from nacl.signing import SigningKey
 from nacl import bindings
 from Cryptodome.Cipher import AES
 from Cryptodome.Random import get_random_bytes
-from Crypto.Signature import eddsa
+from Cryptodome.Signature import eddsa
 from fastecdsa import ecdsa, keys
 from fastecdsa import curve as fst_curve
 from fastecdsa.encoding.der import DEREncoder
