@@ -67,6 +67,23 @@ class Api:
         except requests.exceptions.HTTPError as e:
             raise e
 
+    def get_storage_nonce_public_key(self):
+        '''
+        Retrieve the storage nonce public key to encrypt data towards nodes
+        :return:
+        '''
+        query = '''query {
+                    sharedSecrets {
+                        storageNoncePublicKey
+                    }
+                }'''
+        query = gql(query)
+        try:
+            response = self.client.execute(query)
+            return response['sharedSecrets']['storageNoncePublicKey']
+        except TransportQueryError as e:
+            return None
+
     # TODO : implement wait_confirmation, wss seems to be blocked ?
     def wait_confirmation(self, address: str):
         raise NotImplementedError('wait_confirmation is not implemented yet')
