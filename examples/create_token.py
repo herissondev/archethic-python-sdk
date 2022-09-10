@@ -2,11 +2,11 @@ import archethic
 import json
 
 #
-seed = 'thisismyprivatekey'
+seed = 'loizefozijeofizejfoizjfeoij'
 
-api = archethic.Api('http://localhost:4000')
+api = archethic.Api('https://mainnet.archethic.net')
 
-keychain = api.get_keychain(seed)
+
 token = {
   "supply": archethic.to_big_int(1000000) ,
   "type": "fungible",
@@ -18,7 +18,7 @@ token = {
 tx = archethic.TransactionBuilder('token')
 tx.set_content(json.dumps(token))
 
-tx = keychain.build_tx(tx, 'uco', api.get_transaction_index(keychain.derive_address('uco').hex()))
+tx.build(seed, api.get_transaction_index(archethic.derive_address(seed, 0)))
 tx.origin_sign(archethic.ORIGIN_PRIVATE_KEY)
 
 print(api.send_tx(tx))

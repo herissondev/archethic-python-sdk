@@ -2,7 +2,7 @@ import archethic
 import json
 seed = 'testooooo'
 origin = archethic.ORIGIN_PRIVATE_KEY
-api = archethic.Api('http://localhost:4000')
+api = archethic.Api('https://mainnet.archethic.net')
 
 sk, pk = archethic.derive_keypair(seed, 0)
 keychain_seed = archethic.random_secret_key()
@@ -14,4 +14,5 @@ print(keychain_tx.json())
 if input('Send tx? (y/n)') == 'y':
     print(api.send_tx(keychain_tx))
 
+print(api.get_storage_nonce())
 #todo keyhain ne fonctionne pasaaaa

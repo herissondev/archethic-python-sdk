@@ -20,19 +20,18 @@ async def main():
     transaction.origin_sign(origin)
 
     fees = await api.get_transaction_fee(transaction)
-    address = transaction.address.hex()
-    def test():
-        return 0
 
+    handler = api.create_transaction_handler()
 
-    print(address)
+    def printt(a,b):
+        print(a)
+        print(b)
+    handler.on('confirmation',printt)
 
 
     print(f"UCO Fees: {fees['fee'] / (10**8)} ")
     if input('Send transaction? (y/n) \n') == 'y':
-
-        print(await api.send_transaction(transaction))
-
+        print(await handler.send(transaction))
 
 
 
