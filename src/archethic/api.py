@@ -67,7 +67,7 @@ class Api:
         except requests.exceptions.HTTPError as e:
             raise e
 
-    def get_storage_nonce_public_key(self):
+    def get_storage_nonce_public_key(self) -> str:
         """
         Retrieve the storage nonce public key to encrypt data towards nodes
         :return:
@@ -82,7 +82,7 @@ class Api:
             response = self.client.execute(query)
             return response["sharedSecrets"]["storageNoncePublicKey"]
         except TransportQueryError as e:
-            return None
+            return ""
 
     # TODO : implement wait_confirmation, wss seems to be blocked ?
     def wait_confirmation(self, address: str):
@@ -117,7 +117,12 @@ class Api:
         except TransportQueryError as e:
             return []
 
-    def get_keychain(self, seed: Union[str, bytes]):
+    def get_keychain(self, seed: Union[str, bytes]) -> Keychain:
+        """
+        Retrieve a keychain from the keychain access transaction and decrypt the wallet to retrieve the services associated
+        :param seed: Keychain access's seed
+        :return: Keychain instance
+        """
         access_private_key, access_public_key = derive_keypair(seed, 0)
         access_keychain_address = derive_address(seed, 1)
 

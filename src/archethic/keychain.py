@@ -206,6 +206,14 @@ class Keychain:
     def build_tx(
         self, tx: TransactionBuilder, service: str, index: int
     ) -> TransactionBuilder:
+        """
+        Generate address, previousPublicKey, previousSignature of the transaction and serialize it using a custom binary
+        protocol, based on the derivation path, curve and hash algo of the service given in param.
+        :param tx: An instance of TransactionBuilder
+        :param service: The service name to use for getting the derivation path, the curve and the hash algo
+        :param index: The number of transactions in the chain, to generate the actual and the next public key
+        :return: Return is the signed TransactionBuilder
+        """
         sk, pk = self.derive_keypair(service, index)
         address = self.derive_address(service, index + 1)
 
