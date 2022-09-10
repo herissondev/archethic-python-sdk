@@ -67,12 +67,21 @@ class Keychain:
             service_name = service.decode()
             derivation_path_name = derivation_path.decode()
 
-            keychain.add_service(service_name, derivation_path_name, get_curve_name(curve_id), get_hash_name(hash_id))
+            keychain.add_service(
+                service_name,
+                derivation_path_name,
+                get_curve_name(curve_id),
+                get_hash_name(hash_id),
+            )
 
         return keychain
 
     @staticmethod
-    def new_access_keychain_transaction(seed: Union[str, bytes], keychain_address: Union[str, bytes], origin_private_key: Union[str, bytes]) -> TransactionBuilder:
+    def new_access_keychain_transaction(
+        seed: Union[str, bytes],
+        keychain_address: Union[str, bytes],
+        origin_private_key: Union[str, bytes],
+    ) -> TransactionBuilder:
         """
         Create a new access keychain and build a transaction.
         :param seed:
@@ -86,14 +95,16 @@ class Keychain:
 
         encrypted_secret_key = ec_encrypt(aes_key, pk)
 
-        authorized_keys = [{
-            "publicKey": pk,
-            "encryptedSecretKey": encrypted_secret_key,
-        }]
+        authorized_keys = [
+            {
+                "publicKey": pk,
+                "encryptedSecretKey": encrypted_secret_key,
+            }
+        ]
 
         tx = TransactionBuilder("keychain_access")
         tx.add_ownership(aes_encrypt(keychain_address, aes_key), authorized_keys)
-        tx.build(seed,0)
+        tx.build(seed, 0)
         tx.origin_sign(origin_private_key)
         return tx
 
@@ -195,6 +206,14 @@ class Keychain:
     def build_tx(
         self, tx: TransactionBuilder, service: str, index: int
     ) -> TransactionBuilder:
+        """
+        Generate address, previousPublicKey, previousSignature of the transaction and serialize it using a custom binary
+        protocol, based on the derivation path, curve and hash algo of the service given in param.
+        :param tx: An instance of TransactionBuilder
+        :param service: The service name to use for getting the derivation path, the curve and the hash algo
+        :param index: The number of transactions in the chain, to generate the actual and the next public key
+        :return: Return is the signed TransactionBuilder
+        """
         sk, pk = self.derive_keypair(service, index)
         address = self.derive_address(service, index + 1)
 
@@ -309,9 +328,9 @@ def to_base64_url(data: bytes or str) -> str:
     return base64.urlsafe_b64encode(data).replace(b"=", b"").decode()
 
 
-def read_byte(binary: bytes, pos: int, size: int ) -> (bytes, int):
-    return binary[pos:pos+size][0], pos+size
+def read_byte(binary: bytes, pos: int, size: int) -> (bytes, int):
+    return binary[pos : pos + size][0], pos + size
 
 
 def read_bytes(binary: bytes, pos: int, size: int) -> (bytes, int):
-    return binary[pos:pos+size], pos+size
+    return binary[pos : pos + size], pos + size

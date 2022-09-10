@@ -277,6 +277,14 @@ class TransactionBuilder:
         curve: str = "ed25519",
         hash_algo: str = "sha256",
     ) -> None:
+        """
+        Generate address, previousPublicKey, previousSignature of the transaction and serialize it using a custom binary protocol
+        :param seed: hexadecimal encoding or Uint8Array representing the transaction chain seed to be able to derive and generate the keys
+        :param index: is the number of transactions in the chain, to generate the actual and the next public key
+        :param curve: the elliptic curve to use for the key generation (can be "ed25519", "P256", "secp256k1") - default o "ed25519"
+        :param hash_algo: the hash algorithm to use to generate the address (can be "sha256", "sha512", "sha3-256", "sha3-512", "bake2b") - default to "sha256"
+        :return: None
+        """
         private_key, public_key = crypto.derive_keypair(seed, index, curve)
         address = crypto.derive_address(seed, index + 1, curve, hash_algo)
         self.set_address(address)
@@ -291,7 +299,7 @@ class TransactionBuilder:
     def origin_sign(self, private_key: Union[str, bytes]) -> None:
         """
         Sign the transaction with an origin private key
-        :param private_key: Origin Private Key (hexadecimal or binary buffer)
+        :param private_key: hexadecimal encoding or Uint8Array representing the private key to generate the origin signature to able to perform the ProofOfWork and authorize the transaction
         """
         if isinstance(private_key, str):
             if not utils.is_hex(private_key):
@@ -417,8 +425,11 @@ class TransactionBuilder:
             + self.previous_signature
         )
 
-    def json(self):
-
+    def json(self) -> str:
+        """
+        Export the transaction generated into JSON
+        :return: dict
+        """
         data = {
             "version": VERSION,
             "address": self.address.hex(),
