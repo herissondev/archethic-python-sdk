@@ -463,9 +463,9 @@ class TransactionBuilder:
                         "transfers": [
                             {
                                 "to": transfer["to"].hex(),
-                                "token": transfer["token"].hex(),
+                                "tokenAddress": transfer["token"].hex(),
                                 "amount": transfer["amount"],
-                                "token_id": transfer["token_id"],
+                                "tokenId": transfer["token_id"],
                             }
                             for transfer in self.data["ledger"]["token"]["transfers"]
                         ]
