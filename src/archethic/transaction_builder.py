@@ -154,14 +154,14 @@ class TransactionBuilder:
     def add_token_transfer(
         self,
         send_to: Union[str, bytes],
-        amount: float,
+        amount: int,
         token_adress: Union[str, bytes],
         token_id: int,
     ):
         """
         Add a token transfer to the transaction
         :param send_to: The public key of the receiver
-        :param amount: The amount of tokens to send
+        :param amount: The amount of tokens to send (BigInt format)
         :param token_adress: The token address
         :param token_id: The token id
         """
@@ -195,7 +195,7 @@ class TransactionBuilder:
         self.data["ledger"]["token"]["transfers"].append(
             {
                 "to": send_to,
-                "amount": utils.to_big_int(amount),
+                "amount": amount,
                 "token": token_adress,
                 "token_id": token_id,
             }
