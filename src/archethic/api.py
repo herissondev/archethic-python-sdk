@@ -6,6 +6,7 @@ from archethic.crypto import (
     ec_decrypt,
     aes_decrypt,
 )
+from archethic import utils
 import requests
 from typing import Union
 from urllib.parse import urlparse
@@ -88,6 +89,33 @@ class Api:
             return response["sharedSecrets"]["storageNoncePublicKey"]
         except TransportQueryError as e:
             return None
+
+    def get_token(self, token_address):
+
+        """
+        :param token_address: str or bytes
+        :return: token info
+        """
+        isinstance(token_address, str or bytes),
+
+        if isinstance(token_address, str):
+            if not utils.is_hex(token_address):
+                raise ValueError("token_address must be a hex string")
+
+        elif isinstance(token_address, bytes):
+            token_address = token_address.hex()
+
+        else:
+            raise ValueError("token_address must be a string or a bytes")
+
+
+        query = 'query {token(address: "%s") {genesis id name properties { name value } supply symbol type }}' % token_address
+        query = gql(query)
+        try:
+            response = self.client.execute(query)
+            return response["token"]
+        except TransportQueryError as e:
+            return []
 
     # TODO : implement wait_confirmation, wss seems to be blocked ?
     def wait_confirmation(self, address: str):
