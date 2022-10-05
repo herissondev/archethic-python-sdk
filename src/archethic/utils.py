@@ -63,9 +63,9 @@ def uint8array_to_int(uint8array: Union[bytes, bytearray]) -> int:
 
 
 # Convert any number into a big int for 10^8 decimals
-def to_big_int(number: Union[int, float]) -> int:
-    return round(number * 100_000_000)
+def to_big_int(number: Union[int, float], decimals: int = 8) -> int:
+    return round(number * 100_000_000, decimals)
 
 
-def from_big_int(number: Union[int, float]) -> int:
-    return round(number / 100_000_000)
+def from_big_int(number: Union[int, float], decimals: int = 8) -> float:
+    return round(number / 100_000_000, decimals)
