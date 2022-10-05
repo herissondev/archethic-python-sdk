@@ -109,7 +109,7 @@ class Api:
             raise ValueError("token_address must be a string or a bytes")
 
 
-        query = 'query {token(address: "%s") {genesis id name properties { name value } supply symbol type }}' % token_address
+        query = 'query {token(address: "%s") {genesis name symbol supply type properties collection id decimals }}' % token_address
         query = gql(query)
         try:
             response = self.client.execute(query)
