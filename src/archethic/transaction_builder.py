@@ -127,11 +127,11 @@ class TransactionBuilder:
         )
         return
 
-    def add_uco_transfer(self, send_to: Union[str, bytes], amount: float):
+    def add_uco_transfer(self, send_to: Union[str, bytes], amount: int):
         """
         Add a UCO transfer to the transaction
         :param send_to: The public key of the receiver
-        :param amount: The amount of UCO to send
+        :param amount: int The amount of UCO to send (BigInt format)
         """
         if isinstance(send_to, str):
             if not utils.is_hex(send_to):
@@ -147,21 +147,21 @@ class TransactionBuilder:
         assert amount > 0, "Amount must be greater than 0"
 
         self.data["ledger"]["uco"]["transfers"].append(
-            {"to": send_to, "amount": utils.to_big_int(amount)}
+            {"to": send_to, "amount": amount}
         )
         return
 
     def add_token_transfer(
         self,
         send_to: Union[str, bytes],
-        amount: float,
+        amount: int,
         token_adress: Union[str, bytes],
         token_id: int,
     ):
         """
         Add a token transfer to the transaction
         :param send_to: The public key of the receiver
-        :param amount: The amount of tokens to send
+        :param amount: The amount of tokens to send (BigInt format)
         :param token_adress: The token address
         :param token_id: The token id
         """
@@ -195,7 +195,7 @@ class TransactionBuilder:
         self.data["ledger"]["token"]["transfers"].append(
             {
                 "to": send_to,
-                "amount": utils.to_big_int(amount),
+                "amount": amount,
                 "token": token_adress,
                 "token_id": token_id,
             }
@@ -463,9 +463,9 @@ class TransactionBuilder:
                         "transfers": [
                             {
                                 "to": transfer["to"].hex(),
-                                "token": transfer["token"].hex(),
+                                "tokenAddress": transfer["token"].hex(),
                                 "amount": transfer["amount"],
-                                "token_id": transfer["token_id"],
+                                "tokenId": transfer["token_id"],
                             }
                             for transfer in self.data["ledger"]["token"]["transfers"]
                         ]
