@@ -49,7 +49,7 @@ def test_add_ownership():
 def test_add_uco_transfer():
     transaction = TransactionBuilder("transfer")
     transaction.add_uco_transfer(
-        "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646", 10.03
+        "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646", utils.to_big_int(10.03)
     )
     assert len(transaction.data["ledger"]["uco"]["transfers"]) == 1
     assert transaction.data["ledger"]["uco"]["transfers"][0]["to"] == bytes.fromhex(
@@ -88,11 +88,11 @@ def test_previous_signature_payload():
         ],
     )
     transaction.add_uco_transfer(
-        "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646", 0.2020
+        "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646", utils.to_big_int(0.2020)
     )
     transaction.add_token_transfer(
         "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646",
-        100,
+        utils.to_big_int(100),
         "0000501fa2db78bcf8ceca129e6139d7e38bf0d61eb905441056b9ebe6f1d1feaf88",
         1,
     )
@@ -201,7 +201,7 @@ def test_json():
 
     tx = TransactionBuilder("transfer")
     tx.add_uco_transfer(
-        "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646", 0.2193
+        "0000b1d3750edb9381c96b1a975a55b5b4e4fb37bfab104c10b0b6c9a00433ec4646", utils.to_big_int(0.2193)
     )
     tx.add_ownership(
         bytes(bytearray([0, 1, 2, 3, 4])),

@@ -1,6 +1,12 @@
 from archethic.transaction_builder import TransactionBuilder
 from archethic.keychain import Keychain
-from archethic.crypto import derive_address, derive_keypair, ec_decrypt, aes_decrypt
+from archethic.crypto import (
+    derive_address,
+    derive_keypair,
+    ec_decrypt,
+    aes_decrypt,
+)
+from archethic import utils
 import requests
 from typing import Union
 from urllib.parse import urlparse
@@ -67,7 +73,7 @@ class Api:
         except requests.exceptions.HTTPError as e:
             raise e
 
-    def get_storage_nonce_public_key(self) -> str:
+    def get_storage_nonce_public_key(self):
         """
         Retrieve the storage nonce public key to encrypt data towards nodes
         :return:
@@ -82,7 +88,34 @@ class Api:
             response = self.client.execute(query)
             return response["sharedSecrets"]["storageNoncePublicKey"]
         except TransportQueryError as e:
-            return ""
+            return None
+
+    def get_token(self, token_address):
+
+        """
+        :param token_address: str or bytes
+        :return: token info
+        """
+        isinstance(token_address, str or bytes),
+
+        if isinstance(token_address, str):
+            if not utils.is_hex(token_address):
+                raise ValueError("token_address must be a hex string")
+
+        elif isinstance(token_address, bytes):
+            token_address = token_address.hex()
+
+        else:
+            raise ValueError("token_address must be a string or a bytes")
+
+
+        query = 'query {token(address: "%s") {genesis id name properties { name value } supply symbol type }}' % token_address
+        query = gql(query)
+        try:
+            response = self.client.execute(query)
+            return response["token"]
+        except TransportQueryError as e:
+            return []
 
     # TODO : implement wait_confirmation, wss seems to be blocked ?
     def wait_confirmation(self, address: str):
@@ -117,7 +150,7 @@ class Api:
         except TransportQueryError as e:
             return []
 
-    def get_keychain(self, seed: Union[str, bytes]) -> Keychain:
+    def get_keychain(self, seed: Union[str, bytes]):
         """
         Retrieve a keychain from the keychain access transaction and decrypt the wallet to retrieve the services associated
         :param seed: Keychain access's seed
