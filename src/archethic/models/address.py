@@ -1,12 +1,10 @@
+from dataclasses import dataclass
 
 
+@dataclass
 class Address:
-    def __init__(self, address: str):
-        """
-        The Address class represents a transaction's address
-        """
-        self.address = address
-
+    address: str
+    
     def __str__(self):
         return self.address
 
