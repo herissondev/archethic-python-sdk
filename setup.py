@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import setuptools
 
 
-VERSION = "0.0.1.2"
+VERSION = "0.0.1.3"
 DESCRIPTION = "ArchEthic Python SDK"
 
 with open("README.md", "r", encoding="utf-8") as fh:
